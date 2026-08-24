@@ -90,8 +90,14 @@ SV_S32 InnerSV_DisplayNextEvent(SV_VOID);
 //         仅当显示器不可用时启用;显示器可用时该配置被忽略。
 SV_VOID InnerSV_SetOffscreenConfig(const char* s8OutputPath,const SV_S32& s32Width,const SV_S32& s32Height);
 
+//@brief 强制使用离屏渲染,即使显示器可用
+//@param in bForce SV_TRUE 强制离屏 SV_FALSE 自动检测(默认)
+//@remarks 必须在InnerSV_CreateDisplay之前调用;
+//         需同时通过InnerSV_SetOffscreenConfig配置输出路径
+SV_VOID InnerSV_SetForceOffscreen(const SV_BOOL& bForce);
+
 //@brief 查询当前是否处于离屏渲染模式
-//@return SV_TRUE 离屏渲染(无显示器) SV_FALSE 正常窗口显示
+//@return SV_TRUE 离屏渲染 SV_FALSE 正常窗口显示
 SV_BOOL InnerSV_bIsOffscreenMode(SV_VOID);
 
 //@brief 将当前渲染结果保存为图片

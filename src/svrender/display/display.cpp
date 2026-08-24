@@ -70,7 +70,8 @@ static pthread_mutex_t g_stDisplayMutex ={0};
 //互斥锁，防止多线程调用swapbuffer操作
 static pthread_mutex_t g_stDisplaySwapMutex={0};
 //局部变量，离屏渲染(无显示器)相关配置与状态
-static SV_BOOL g_bOffscreenMode = SV_FALSE;      //SV_TRUE表示当前无显示器,使用pbuffer离屏渲染
+static SV_BOOL g_bOffscreenMode = SV_FALSE;      //SV_TRUE表示当前使用pbuffer离屏渲染
+static SV_BOOL g_bForceOffscreen = SV_FALSE;     //SV_TRUE表示强制离屏渲染,即使显示器可用
 static std::string g_strOffscreenPath = "";      //离屏渲染结果保存路径,空串表示禁用离屏渲染
 static SV_S32 g_s32OffscreenWidth = 0;           //离屏渲染宽度
 static SV_S32 g_s32OffscreenHeight = 0;          //离屏渲染高度
@@ -184,7 +185,11 @@ static SV_BOOL bFbNativeDisplayCreate(const SV_S32& s32FbDevIdx,EGLNativeDisplay
      return SV_FALSE;
    }
   EGLNativeWindowType pNativeWindow =  fbCreateWindow(pEglNativeType, 0, 0, 0, 0);
-  CHECK(pNativeWindow)<<"fbCreateWindow failed";
+  if(pNativeWindow==NULL) {
+     //软失败:交由调用方决定是否退化为离屏渲染
+     LOG(WARNING) << "fbCreateWindow failed";
+     return SV_FALSE;
+   }
   *pWindow = pNativeWindow;
   *ppNativeType =pEglNativeType;
   return SV_TRUE;
@@ -202,27 +207,40 @@ SV_VOID InnerSV_CreateDisplay(const SV_S32& s32FbDevIdx,const char* s8KeyBoardDe
     LOG(WARNING) << "Native Display opened;please close it first";
     return ;
   }
-  //先尝试打开显示器;失败且已配置离屏输出路径时退化为离屏渲染
+  //强制离屏时跳过显示器打开;否则先尝试打开显示器,失败则退化为离屏渲染
   SV_BOOL bNativeOk = SV_FALSE;
 #ifdef EGL_USE_X11
-  Window window;
-  bNativeOk = bX11NativeDisplayCreate(&g_pEglNativeDisplayType,&window);
-  if(SV_TRUE == bNativeOk) {
-    XSelectInput(g_pEglNativeDisplayType, window, KeyPressMask | PointerMotionMask | ButtonPressMask);
+  Window window = 0;
+  if(SV_TRUE != g_bForceOffscreen) {
+    bNativeOk = bX11NativeDisplayCreate(&g_pEglNativeDisplayType,&window);
+    if(SV_TRUE == bNativeOk) {
+      XSelectInput(g_pEglNativeDisplayType, window, KeyPressMask | PointerMotionMask | ButtonPressMask);
+    }
   }
 #else
-  InnerSV_OpenInputDev(s8KeyBoardDev,s8MouseDev);
-  EGLNativeWindowType window;
-  bNativeOk = bFbNativeDisplayCreate(s32FbDevIdx,&g_pEglNativeDisplayType,&window);
+  EGLNativeWindowType window = 0;
+  if(SV_TRUE != g_bForceOffscreen) {
+    InnerSV_OpenInputDev(s8KeyBoardDev,s8MouseDev);
+    bNativeOk = bFbNativeDisplayCreate(s32FbDevIdx,&g_pEglNativeDisplayType,&window);
+  }
 #endif
   if(SV_TRUE != bNativeOk) {
-    //无显示器:未配置离屏路径则保持原有的致命错误语义
+    //无可用显示器:未配置离屏路径则保持原有的致命错误语义
     CHECK(!g_strOffscreenPath.empty())
-        << "No display available and offscreen_output_path is not configured";
-    LOG(WARNING) << "No display available;fallback to offscreen rendering: "
+        << (SV_TRUE == g_bForceOffscreen
+              ? "force_offscreen is on but offscreen_output_path is not configured"
+              : "No display available and offscreen_output_path is not configured");
+    LOG(WARNING) << (SV_TRUE == g_bForceOffscreen ? "force_offscreen enabled;" : "No display available;")
+                 << " using offscreen rendering: "
                  << g_s32OffscreenWidth << "x" << g_s32OffscreenHeight
                  << " -> " << g_strOffscreenPath;
     g_bOffscreenMode = SV_TRUE;
+#ifdef EGL_USE_X11
+    //X11下若已打开Display需先关闭,避免泄漏
+    if(NULL != g_pEglNativeDisplayType) {
+      XCloseDisplay(g_pEglNativeDisplayType);
+    }
+#endif
     g_pEglNativeDisplayType = static_cast<decltype(g_pEglNativeDisplayType)>(EGL_DEFAULT_DISPLAY);
   }
    g_pEglDisplay = eglGetDisplay(g_pEglNativeDisplayType);
@@ -234,6 +252,31 @@ SV_VOID InnerSV_CreateDisplay(const SV_S32& s32FbDevIdx,const char* s8KeyBoardDe
    eglBindAPI(EGL_OPENGL_ES_API);
    EGLConfig   eglconfig = NULL;
    SV_S32 s32ConfigNumbers;
+   //先尝试窗口表面;显示器已关闭时窗口表面会创建失败,此时退化为pbuffer
+   if(SV_TRUE != g_bOffscreenMode) {
+     eglChooseConfig(g_pEglDisplay, s_configAttribs, &eglconfig, 1, &s32ConfigNumbers);
+     if(EGL_SUCCESS != eglGetError() || s32ConfigNumbers <= 0) {
+       LOG(WARNING) << "No EGL config for window surface;will try offscreen";
+       g_pEglsurface = EGL_NO_SURFACE;
+     } else {
+       g_pEglsurface = eglCreateWindowSurface(g_pEglDisplay, eglconfig, window, NULL);
+       const EGLint s32WinErr = eglGetError();
+       if(EGL_SUCCESS != s32WinErr || EGL_NO_SURFACE == g_pEglsurface) {
+         LOG(WARNING) << "eglCreateWindowSurface failed (EGL error 0x" << std::hex << s32WinErr
+                      << std::dec << ");display may be powered off";
+         g_pEglsurface = EGL_NO_SURFACE;
+       }
+     }
+     if(EGL_NO_SURFACE == g_pEglsurface) {
+       //窗口表面不可用:已配置离屏路径则退化为离屏,否则保持致命错误语义
+       CHECK(!g_strOffscreenPath.empty())
+           << "Window surface unavailable and offscreen_output_path is not configured";
+       LOG(WARNING) << "Falling back to offscreen rendering: "
+                    << g_s32OffscreenWidth << "x" << g_s32OffscreenHeight
+                    << " -> " << g_strOffscreenPath;
+       g_bOffscreenMode = SV_TRUE;
+     }
+   }
    if(SV_TRUE == g_bOffscreenMode) {
      //离屏渲染:选择pbuffer配置并创建pbuffer表面
      static const EGLint s_pbufferConfigAttribs[] = {
@@ -257,11 +300,6 @@ SV_VOID InnerSV_CreateDisplay(const SV_S32& s32FbDevIdx,const char* s8KeyBoardDe
      g_pEglsurface = eglCreatePbufferSurface(g_pEglDisplay, eglconfig, aPbufferAttribs);
      CHECK(EGL_SUCCESS == eglGetError());
      CHECK(EGL_NO_SURFACE != g_pEglsurface) << "eglCreatePbufferSurface failed";
-   } else {
-     eglChooseConfig(g_pEglDisplay, s_configAttribs, &eglconfig, 1, &s32ConfigNumbers);
-     CHECK(EGL_SUCCESS == eglGetError());
-     g_pEglsurface = eglCreateWindowSurface(g_pEglDisplay, eglconfig, window, NULL);
-     CHECK(EGL_SUCCESS == eglGetError());
    }
    EGLint ContextAttribList[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
    g_pEglContex = eglCreateContext(g_pEglDisplay, eglconfig, EGL_NO_CONTEXT, ContextAttribList);
@@ -304,6 +342,10 @@ SV_VOID InnerSV_SetOffscreenConfig(const char* s8OutputPath,const SV_S32& s32Wid
   g_strOffscreenPath = s8OutputPath;
   g_s32OffscreenWidth = s32Width;
   g_s32OffscreenHeight = s32Height;
+}
+
+SV_VOID InnerSV_SetForceOffscreen(const SV_BOOL& bForce) {
+  g_bForceOffscreen = bForce;
 }
 
 SV_BOOL InnerSV_bIsOffscreenMode(SV_VOID) {
@@ -352,7 +394,7 @@ SV_BOOL InnerSV_bSaveOffscreenFrame(SV_VOID) {
 }
 
 SV_VOID InnerSV_DeleteDisplay(const SV_S32& s32FbDevIdx) {
-  //离屏模式下g_pEglNativeDisplayType为EGL_DEFAULT_DISPLAY(0),需单独判断以释放EGL资源
+  //离屏模式下g_pEglNativeDisplayType可能为EGL_DEFAULT_DISPLAY(0),需单独判断以释放EGL资源
   if(SV_TRUE == g_bOffscreenMode) {
     if(NULL != g_pEglDisplay) {
       eglDestroyContext(g_pEglDisplay,g_pEglContex);
@@ -361,7 +403,12 @@ SV_VOID InnerSV_DeleteDisplay(const SV_S32& s32FbDevIdx) {
       eglTerminate(g_pEglDisplay);
       eglReleaseThread();
     }
-#ifndef EGL_USE_X11
+#ifdef EGL_USE_X11
+    //窗口表面创建失败而退化为离屏时,X Display仍处于打开状态,需关闭
+    if(NULL != g_pEglNativeDisplayType) {
+      XCloseDisplay(g_pEglNativeDisplayType);
+    }
+#else
     InnerSV_CloseInputDev();
 #endif
     g_bOffscreenMode = SV_FALSE;

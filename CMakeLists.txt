@@ -145,11 +145,11 @@ target_link_libraries(sv_avm_render_test
 )
 
 # 构建后把运行所需的资源拷贝到可执行文件同级目录，使其可直接运行
+# 注意：config.json 不拷贝。程序以 ../config.json (工程根目录) 为唯一配置来源，
+#       拷贝一份到 build/ 只会造成"改了却不生效"的误解。
 add_custom_command(TARGET sv_avm_render_test POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${TEST_DIR}/res $<TARGET_FILE_DIR:sv_avm_render_test>/res
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${TEST_DIR}/_aParam.xml $<TARGET_FILE_DIR:sv_avm_render_test>/_aParam.xml
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${CMAKE_SOURCE_DIR}/config.json $<TARGET_FILE_DIR:sv_avm_render_test>/config.json
 )

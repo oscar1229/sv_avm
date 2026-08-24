@@ -60,7 +60,9 @@ struct SvRunConfig {
     SV_BOOL bUseFallbackImage = SV_FALSE;
     // Fallback JPG dir used when the camera is unavailable; relative to repo root.
     std::string strFallbackImageDir = "sv_avm_test/res";
-    // Offscreen output path used only when no display is present; empty disables it.
+    // SV_TRUE forces offscreen rendering even when a display is available.
+    SV_BOOL bForceOffscreen = SV_FALSE;
+    // Offscreen output path used when no display is present; empty disables it.
     std::string strOffscreenOutputPath = "";
 };
 
@@ -159,6 +161,7 @@ static void LoadConfigJson(const char* s8Path, SvRunConfig* pstCfg) {
         if (findVal(key, &v) && !v.empty()) *out = v;
     };
     parseBool("use_fallback_image", &pstCfg->bUseFallbackImage);
+    parseBool("force_offscreen", &pstCfg->bForceOffscreen);
     parseStr("fallback_image_dir", &pstCfg->strFallbackImageDir);
     parseStr("offscreen_output_path", &pstCfg->strOffscreenOutputPath);
 }
@@ -731,6 +734,7 @@ int main(int argc, char* argv[]) {
               << ", live_vi=" << stCfg.s32LiveViWidth << "x" << stCfg.s32LiveViHeight
               << " timeout=" << stCfg.s32LiveViTimeoutMs << "ms"
               << ", use_fallback_image=" << (stCfg.bUseFallbackImage ? "true" : "false")
+              << ", force_offscreen=" << (stCfg.bForceOffscreen ? "true" : "false")
               << ", fallback_image_dir=" << stCfg.strFallbackImageDir
               << ", offscreen_output_path="
               << (stCfg.strOffscreenOutputPath.empty() ? "(disabled)" : stCfg.strOffscreenOutputPath);
@@ -750,12 +754,15 @@ int main(int argc, char* argv[]) {
         svrender::display::InnerSV_SetOffscreenConfig(
             ResolveRepoPath(stCfg.strOffscreenOutputPath).c_str(),
             stCfg.s32LiveViWidth, stCfg.s32LiveViHeight);
+        svrender::display::InnerSV_SetForceOffscreen(stCfg.bForceOffscreen);
+    } else if (SV_TRUE == stCfg.bForceOffscreen) {
+        LOG(ERROR) << "force_offscreen=true but offscreen_output_path is empty; ignoring force_offscreen";
     }
 
     svrender::display::InnerSV_CreateDisplay(NULL, NULL);
     const SV_BOOL bOffscreen = svrender::display::InnerSV_bIsOffscreenMode();
     SV_SIZE_S stSize = svrender::display::InnerSV_GetDisplayFrameSize();
-    LOG(INFO) << "Render target: " << (bOffscreen ? "offscreen (no display)" : "display")
+    LOG(INFO) << "Render target: " << (bOffscreen ? "offscreen" : "display")
               << ", size: " << stSize.s32Width << "x" << stSize.s32Height;
 
     svrender::mvp::InnerSV_MvCalss stMvClass;
