@@ -1,0 +1,18 @@
+{
+  // 渲染帧数；0 表示一直运行到 Ctrl+C
+  "frames": 100,
+
+  // 每帧节流睡眠，单位微秒；0 表示不主动 sleep
+  "sleep_us": 0,
+
+  // 碗面网格细分数；可选 90/180/360/720
+  "grid_subdiv": 180,
+
+  // live VI 输入参数
+  "live_vi_dev": 0,
+  "live_vi_width": 1280,
+  "live_vi_height": 720,
+  "live_vi_timeout_ms": 33,
+  "live_vi_mipi_lanes": 4,
+  "live_vi_mbps": 800
+}
