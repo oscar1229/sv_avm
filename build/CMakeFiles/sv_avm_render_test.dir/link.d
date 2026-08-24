@@ -2,7 +2,7 @@ sv_avm_render_test: \
   /lib/riscv64-linux-gnu/Scrt1.o \
   /usr/lib/gcc/riscv64-linux-gnu/15/crti.o \
   /usr/lib/gcc/riscv64-linux-gnu/15/crtbeginS.o \
-  CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.o \
+  CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.o \
   libsvrender.so \
   libsvmcalibrate.so \
   libsvmparam.so \
@@ -115,7 +115,7 @@ sv_avm_render_test: \
 
 /usr/lib/gcc/riscv64-linux-gnu/15/crtbeginS.o:
 
-CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.o:
+CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.o:
 
 libsvrender.so:
 

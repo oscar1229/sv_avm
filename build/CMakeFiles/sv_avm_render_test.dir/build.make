@@ -72,28 +72,28 @@ include CMakeFiles/sv_avm_render_test.dir/flags.make
 CMakeFiles/sv_avm_render_test.dir/codegen:
 .PHONY : CMakeFiles/sv_avm_render_test.dir/codegen
 
-CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.o: CMakeFiles/sv_avm_render_test.dir/flags.make
-CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.o: /home/szl/code/sv_avm/src/sv_avm_test/sv_avm_render_main_test.cpp
-CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.o: CMakeFiles/sv_avm_render_test.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/szl/code/sv_avm/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.o -MF CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.o.d -o CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.o -c /home/szl/code/sv_avm/src/sv_avm_test/sv_avm_render_main_test.cpp
+CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.o: CMakeFiles/sv_avm_render_test.dir/flags.make
+CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.o: /home/szl/code/sv_avm/sv_avm_test/sv_avm_render_main_test.cpp
+CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.o: CMakeFiles/sv_avm_render_test.dir/compiler_depend.ts
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/szl/code/sv_avm/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.o -MF CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.o.d -o CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.o -c /home/szl/code/sv_avm/sv_avm_test/sv_avm_render_main_test.cpp
 
-CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.i: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/szl/code/sv_avm/src/sv_avm_test/sv_avm_render_main_test.cpp > CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.i
+CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.i: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.i"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/szl/code/sv_avm/sv_avm_test/sv_avm_render_main_test.cpp > CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.i
 
-CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.s: cmake_force
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/szl/code/sv_avm/src/sv_avm_test/sv_avm_render_main_test.cpp -o CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.s
+CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.s: cmake_force
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.s"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/szl/code/sv_avm/sv_avm_test/sv_avm_render_main_test.cpp -o CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.s
 
 # Object files for target sv_avm_render_test
 sv_avm_render_test_OBJECTS = \
-"CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.o"
+"CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.o"
 
 # External object files for target sv_avm_render_test
 sv_avm_render_test_EXTERNAL_OBJECTS =
 
-sv_avm_render_test: CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.o
+sv_avm_render_test: CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.o
 sv_avm_render_test: CMakeFiles/sv_avm_render_test.dir/build.make
 sv_avm_render_test: CMakeFiles/sv_avm_render_test.dir/compiler_depend.ts
 sv_avm_render_test: libsvrender.so
@@ -114,8 +114,8 @@ sv_avm_render_test: /usr/lib/riscv64-linux-gnu/libgflags.so.2.2.2
 sv_avm_render_test: CMakeFiles/sv_avm_render_test.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/szl/code/sv_avm/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable sv_avm_render_test"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/sv_avm_render_test.dir/link.txt --verbose=$(VERBOSE)
-	/usr/bin/cmake -E copy_directory /home/szl/code/sv_avm/src/sv_avm_test/res /home/szl/code/sv_avm/build/res
-	/usr/bin/cmake -E copy_if_different /home/szl/code/sv_avm/src/sv_avm_test/_aParam.xml /home/szl/code/sv_avm/build/_aParam.xml
+	/usr/bin/cmake -E copy_directory /home/szl/code/sv_avm/sv_avm_test/res /home/szl/code/sv_avm/build/res
+	/usr/bin/cmake -E copy_if_different /home/szl/code/sv_avm/sv_avm_test/_aParam.xml /home/szl/code/sv_avm/build/_aParam.xml
 	/usr/bin/cmake -E copy_if_different /home/szl/code/sv_avm/config.json /home/szl/code/sv_avm/build/config.json
 
 # Rule to build all files generated by this target.

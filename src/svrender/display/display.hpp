@@ -82,6 +82,23 @@ SV_VOID* InnerSV_GetEglDisplay(SV_VOID);
 SV_S32 InnerSV_DisplayGetEventNum(SV_VOID);
 SV_S32 InnerSV_DisplayNextEvent(SV_VOID);
 
+//@brief 配置无显示器时的离屏渲染参数
+//@param in s8OutputPath 渲染结果保存路径;NULL或空串表示禁用离屏渲染
+//       in s32Width  离屏渲染宽度
+//       in s32Height 离屏渲染高度
+//@remarks 必须在InnerSV_CreateDisplay之前调用才生效。
+//         仅当显示器不可用时启用;显示器可用时该配置被忽略。
+SV_VOID InnerSV_SetOffscreenConfig(const char* s8OutputPath,const SV_S32& s32Width,const SV_S32& s32Height);
+
+//@brief 查询当前是否处于离屏渲染模式
+//@return SV_TRUE 离屏渲染(无显示器) SV_FALSE 正常窗口显示
+SV_BOOL InnerSV_bIsOffscreenMode(SV_VOID);
+
+//@brief 将当前渲染结果保存为图片
+//@return SV_TRUE 保存成功 SV_FALSE 保存失败或未处于离屏模式
+//@remarks 仅离屏模式下有效;需在InnerSV_DeleteDisplay之前调用
+SV_BOOL InnerSV_bSaveOffscreenFrame(SV_VOID);
+
 }//end of display
 }//end of svrender
 }//end of sv_avm

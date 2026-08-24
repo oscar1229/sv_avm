@@ -8,7 +8,7 @@ set(CMAKE_DEPENDS_LANGUAGES
 
 # The set of dependency files which are needed:
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
-  "/home/szl/code/sv_avm/src/sv_avm_test/sv_avm_render_main_test.cpp" "CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.o" "gcc" "CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.o.d"
+  "/home/szl/code/sv_avm/sv_avm_test/sv_avm_render_main_test.cpp" "CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.o" "gcc" "CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.o.d"
   "" "sv_avm_render_test" "gcc" "CMakeFiles/sv_avm_render_test.dir/link.d"
   )
 

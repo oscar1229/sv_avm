@@ -4,6 +4,11 @@
  */
 #include "display.hpp"
 
+#include <string>
+#include <vector>
+#include <sys/stat.h>
+#include <opencv2/opencv.hpp>
+
 #include <unistd.h>
 #include <stdio.h>
 #include <fcntl.h>
@@ -64,6 +69,11 @@ static EGLContext g_pEglContex = NULL;
 static pthread_mutex_t g_stDisplayMutex ={0};
 //互斥锁，防止多线程调用swapbuffer操作
 static pthread_mutex_t g_stDisplaySwapMutex={0};
+//局部变量，离屏渲染(无显示器)相关配置与状态
+static SV_BOOL g_bOffscreenMode = SV_FALSE;      //SV_TRUE表示当前无显示器,使用pbuffer离屏渲染
+static std::string g_strOffscreenPath = "";      //离屏渲染结果保存路径,空串表示禁用离屏渲染
+static SV_S32 g_s32OffscreenWidth = 0;           //离屏渲染宽度
+static SV_S32 g_s32OffscreenHeight = 0;          //离屏渲染高度
 
 #ifndef EGL_USE_X11
 static SV_S32 g_s32KeyBoadFd =-1; //键盘文件设备
@@ -192,15 +202,29 @@ SV_VOID InnerSV_CreateDisplay(const SV_S32& s32FbDevIdx,const char* s8KeyBoardDe
     LOG(WARNING) << "Native Display opened;please close it first";
     return ;
   }
+  //先尝试打开显示器;失败且已配置离屏输出路径时退化为离屏渲染
+  SV_BOOL bNativeOk = SV_FALSE;
 #ifdef EGL_USE_X11
   Window window;
-  CHECK(bX11NativeDisplayCreate(&g_pEglNativeDisplayType,&window))<<"bX11NativeDisplayCreate failed";
-  XSelectInput(g_pEglNativeDisplayType, window, KeyPressMask | PointerMotionMask | ButtonPressMask);
+  bNativeOk = bX11NativeDisplayCreate(&g_pEglNativeDisplayType,&window);
+  if(SV_TRUE == bNativeOk) {
+    XSelectInput(g_pEglNativeDisplayType, window, KeyPressMask | PointerMotionMask | ButtonPressMask);
+  }
 #else
   InnerSV_OpenInputDev(s8KeyBoardDev,s8MouseDev);
   EGLNativeWindowType window;
-  CHECK(bFbNativeDisplayCreate(s32FbDevIdx,&g_pEglNativeDisplayType,&window))<<"bFbNativeDisplayCreate";
+  bNativeOk = bFbNativeDisplayCreate(s32FbDevIdx,&g_pEglNativeDisplayType,&window);
 #endif
+  if(SV_TRUE != bNativeOk) {
+    //无显示器:未配置离屏路径则保持原有的致命错误语义
+    CHECK(!g_strOffscreenPath.empty())
+        << "No display available and offscreen_output_path is not configured";
+    LOG(WARNING) << "No display available;fallback to offscreen rendering: "
+                 << g_s32OffscreenWidth << "x" << g_s32OffscreenHeight
+                 << " -> " << g_strOffscreenPath;
+    g_bOffscreenMode = SV_TRUE;
+    g_pEglNativeDisplayType = static_cast<decltype(g_pEglNativeDisplayType)>(EGL_DEFAULT_DISPLAY);
+  }
    g_pEglDisplay = eglGetDisplay(g_pEglNativeDisplayType);
    CHECK(EGL_NO_DISPLAY != g_pEglDisplay);
    CHECK( eglGetError() == EGL_SUCCESS);
@@ -210,10 +234,35 @@ SV_VOID InnerSV_CreateDisplay(const SV_S32& s32FbDevIdx,const char* s8KeyBoardDe
    eglBindAPI(EGL_OPENGL_ES_API);
    EGLConfig   eglconfig = NULL;
    SV_S32 s32ConfigNumbers;
-   eglChooseConfig(g_pEglDisplay, s_configAttribs, &eglconfig, 1, &s32ConfigNumbers);
-   CHECK(EGL_SUCCESS == eglGetError());
-   g_pEglsurface = eglCreateWindowSurface(g_pEglDisplay, eglconfig, window, NULL);
-   CHECK(EGL_SUCCESS == eglGetError());
+   if(SV_TRUE == g_bOffscreenMode) {
+     //离屏渲染:选择pbuffer配置并创建pbuffer表面
+     static const EGLint s_pbufferConfigAttribs[] = {
+       EGL_SAMPLES, 0,
+       EGL_RED_SIZE, 8,
+       EGL_GREEN_SIZE, 8,
+       EGL_BLUE_SIZE, 8,
+       EGL_ALPHA_SIZE, 0,
+       EGL_DEPTH_SIZE, 8,
+       EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
+       EGL_NONE
+     };
+     eglChooseConfig(g_pEglDisplay, s_pbufferConfigAttribs, &eglconfig, 1, &s32ConfigNumbers);
+     CHECK(EGL_SUCCESS == eglGetError());
+     CHECK(s32ConfigNumbers > 0) << "No EGL config supports EGL_PBUFFER_BIT";
+     const EGLint aPbufferAttribs[] = {
+       EGL_WIDTH, g_s32OffscreenWidth,
+       EGL_HEIGHT, g_s32OffscreenHeight,
+       EGL_NONE
+     };
+     g_pEglsurface = eglCreatePbufferSurface(g_pEglDisplay, eglconfig, aPbufferAttribs);
+     CHECK(EGL_SUCCESS == eglGetError());
+     CHECK(EGL_NO_SURFACE != g_pEglsurface) << "eglCreatePbufferSurface failed";
+   } else {
+     eglChooseConfig(g_pEglDisplay, s_configAttribs, &eglconfig, 1, &s32ConfigNumbers);
+     CHECK(EGL_SUCCESS == eglGetError());
+     g_pEglsurface = eglCreateWindowSurface(g_pEglDisplay, eglconfig, window, NULL);
+     CHECK(EGL_SUCCESS == eglGetError());
+   }
    EGLint ContextAttribList[] = { EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE };
    g_pEglContex = eglCreateContext(g_pEglDisplay, eglconfig, EGL_NO_CONTEXT, ContextAttribList);
    CHECK(EGL_SUCCESS == eglGetError());
@@ -232,13 +281,91 @@ SV_VOID InnerSV_DisplayClear(SV_VOID) {
 
 SV_VOID InnerSV_DisplaySwap(SV_VOID) {
   CHECK(NULL != g_pEglDisplay || NULL != g_pEglsurface);
+  //离屏模式下不做swap:保留后台缓冲内容,便于退出前读回渲染结果
+  if(SV_TRUE == g_bOffscreenMode) {
+    return ;
+  }
   //pthread_mutex_lock(&g_stDisplaySwapMutex);
    eglSwapBuffers(g_pEglDisplay, g_pEglsurface);
   //pthread_mutex_unlock(&g_stDisplaySwapMutex);
 }
 
+SV_VOID InnerSV_SetOffscreenConfig(const char* s8OutputPath,const SV_S32& s32Width,const SV_S32& s32Height) {
+  if(NULL == s8OutputPath || '\0' == s8OutputPath[0]) {
+    g_strOffscreenPath.clear();
+    return ;
+  }
+  if(s32Width <= 0 || s32Height <= 0) {
+    LOG(WARNING) << "Invalid offscreen size " << s32Width << "x" << s32Height
+                 << ";offscreen rendering disabled";
+    g_strOffscreenPath.clear();
+    return ;
+  }
+  g_strOffscreenPath = s8OutputPath;
+  g_s32OffscreenWidth = s32Width;
+  g_s32OffscreenHeight = s32Height;
+}
+
+SV_BOOL InnerSV_bIsOffscreenMode(SV_VOID) {
+  return g_bOffscreenMode;
+}
+
+SV_BOOL InnerSV_bSaveOffscreenFrame(SV_VOID) {
+  if(SV_TRUE != g_bOffscreenMode) {
+    return SV_FALSE;
+  }
+  if(NULL == g_pEglDisplay || NULL == g_pEglsurface) {
+    LOG(ERROR) << "Offscreen surface not available;cannot save frame";
+    return SV_FALSE;
+  }
+  const SV_S32 s32W = g_s32OffscreenWidth;
+  const SV_S32 s32H = g_s32OffscreenHeight;
+  //RGBA是GLES2下glReadPixels唯一保证支持的格式
+  std::vector<SV_U8> vRgba((size_t)s32W * (size_t)s32H * 4U);
+  glReadPixels(0, 0, s32W, s32H, GL_RGBA, GL_UNSIGNED_BYTE, vRgba.data());
+  const GLenum enGlErr = glGetError();
+  if(GL_NO_ERROR != enGlErr) {
+    LOG(ERROR) << "glReadPixels failed: 0x" << std::hex << enGlErr;
+    return SV_FALSE;
+  }
+  cv::Mat mRgba(s32H, s32W, CV_8UC4, vRgba.data());
+  cv::Mat mBgr;
+  cv::cvtColor(mRgba, mBgr, cv::COLOR_RGBA2BGR);
+  //GL原点在左下,图片原点在左上,需垂直翻转
+  cv::flip(mBgr, mBgr, 0);
+
+  //输出路径含目录时先创建目录
+  const size_t szSlash = g_strOffscreenPath.find_last_of('/');
+  if(std::string::npos != szSlash && 0 != szSlash) {
+    const std::string strDir = g_strOffscreenPath.substr(0, szSlash);
+    if(0 != mkdir(strDir.c_str(), 0755) && EEXIST != errno) {
+      LOG(WARNING) << "mkdir " << strDir << " failed: " << strerror(errno);
+    }
+  }
+  if(!cv::imwrite(g_strOffscreenPath, mBgr)) {
+    LOG(ERROR) << "Failed to write offscreen frame: " << g_strOffscreenPath;
+    return SV_FALSE;
+  }
+  LOG(INFO) << "Offscreen frame saved: " << g_strOffscreenPath
+            << " (" << s32W << "x" << s32H << ")";
+  return SV_TRUE;
+}
+
 SV_VOID InnerSV_DeleteDisplay(const SV_S32& s32FbDevIdx) {
-  if(NULL != g_pEglNativeDisplayType) {
+  //离屏模式下g_pEglNativeDisplayType为EGL_DEFAULT_DISPLAY(0),需单独判断以释放EGL资源
+  if(SV_TRUE == g_bOffscreenMode) {
+    if(NULL != g_pEglDisplay) {
+      eglDestroyContext(g_pEglDisplay,g_pEglContex);
+      eglDestroySurface(g_pEglDisplay,g_pEglsurface);
+      eglMakeCurrent(g_pEglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+      eglTerminate(g_pEglDisplay);
+      eglReleaseThread();
+    }
+#ifndef EGL_USE_X11
+    InnerSV_CloseInputDev();
+#endif
+    g_bOffscreenMode = SV_FALSE;
+  } else if(NULL != g_pEglNativeDisplayType) {
     eglDestroyContext(g_pEglDisplay,g_pEglContex);
     eglDestroySurface(g_pEglDisplay,g_pEglsurface);
     eglMakeCurrent(g_pEglDisplay, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
@@ -260,6 +387,13 @@ SV_VOID InnerSV_DeleteDisplay(const SV_S32& s32FbDevIdx) {
 
 
 SV_SIZE_S InnerSV_GetDisplayFrameSize(SV_VOID) {
+  //离屏模式下无显示器可查询,直接返回配置的离屏渲染尺寸
+  if(SV_TRUE == g_bOffscreenMode) {
+    SV_SIZE_S stOffscreenSize;
+    stOffscreenSize.s32Width = g_s32OffscreenWidth;
+    stOffscreenSize.s32Height = g_s32OffscreenHeight;
+    return stOffscreenSize;
+  }
   CHECK(g_pEglNativeDisplayType!=NULL)<<"pEglNativeDisplayType==NULL";
 #ifdef EGL_USE_X11
    SV_SIZE_S stSize;

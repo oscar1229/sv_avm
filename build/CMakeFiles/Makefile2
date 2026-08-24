@@ -187,9 +187,9 @@ CMakeFiles/svrender.dir/clean:
 # Target rules for target CMakeFiles/sv_avm_render_test.dir
 
 # All Build rule for target.
-CMakeFiles/sv_avm_render_test.dir/all: CMakeFiles/svrender.dir/all
 CMakeFiles/sv_avm_render_test.dir/all: CMakeFiles/svmparam.dir/all
 CMakeFiles/sv_avm_render_test.dir/all: CMakeFiles/svmcalibrate.dir/all
+CMakeFiles/sv_avm_render_test.dir/all: CMakeFiles/svrender.dir/all
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sv_avm_render_test.dir/build.make CMakeFiles/sv_avm_render_test.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sv_avm_render_test.dir/build.make CMakeFiles/sv_avm_render_test.dir/build
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/szl/code/sv_avm/build/CMakeFiles --progress-num=1,2 "Built target sv_avm_render_test"

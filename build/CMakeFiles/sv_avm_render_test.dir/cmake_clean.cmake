@@ -1,7 +1,7 @@
 file(REMOVE_RECURSE
   "CMakeFiles/sv_avm_render_test.dir/link.d"
-  "CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.o"
-  "CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.o.d"
+  "CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.o"
+  "CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.o.d"
   "sv_avm_render_test"
   "sv_avm_render_test.pdb"
 )

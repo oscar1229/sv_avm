@@ -65,7 +65,8 @@ include_directories(
 )
 
 # ============================================================
-# 库拆分：src 下除 sv_avm_test 外的三个模块各封装为独立库
+# 库拆分：src 下的三个模块各封装为独立库
+# (测试程序已移至与 src 同级的 sv_avm_test 目录)
 #   svmparam     - 基础参数模块 (无内部依赖)
 #   svmcalibrate - 标定模块 (依赖 svmparam)
 #   svrender     - 渲染模块 (依赖 svmparam)
@@ -126,7 +127,7 @@ install(FILES
 )
 
 # 测试程序
-set(TEST_DIR ${CMAKE_SOURCE_DIR}/src/sv_avm_test)
+set(TEST_DIR ${CMAKE_SOURCE_DIR}/sv_avm_test)
 
 add_executable(sv_avm_render_test ${TEST_DIR}/sv_avm_render_main_test.cpp)
 

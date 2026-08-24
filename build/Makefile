@@ -213,30 +213,6 @@ sv_avm_render_test/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/sv_avm_render_test.dir/build.make CMakeFiles/sv_avm_render_test.dir/build
 .PHONY : sv_avm_render_test/fast
 
-src/sv_avm_test/sv_avm_render_main_test.o: src/sv_avm_test/sv_avm_render_main_test.cpp.o
-.PHONY : src/sv_avm_test/sv_avm_render_main_test.o
-
-# target to build an object file
-src/sv_avm_test/sv_avm_render_main_test.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/sv_avm_render_test.dir/build.make CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.o
-.PHONY : src/sv_avm_test/sv_avm_render_main_test.cpp.o
-
-src/sv_avm_test/sv_avm_render_main_test.i: src/sv_avm_test/sv_avm_render_main_test.cpp.i
-.PHONY : src/sv_avm_test/sv_avm_render_main_test.i
-
-# target to preprocess a source file
-src/sv_avm_test/sv_avm_render_main_test.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/sv_avm_render_test.dir/build.make CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.i
-.PHONY : src/sv_avm_test/sv_avm_render_main_test.cpp.i
-
-src/sv_avm_test/sv_avm_render_main_test.s: src/sv_avm_test/sv_avm_render_main_test.cpp.s
-.PHONY : src/sv_avm_test/sv_avm_render_main_test.s
-
-# target to generate assembly for a file
-src/sv_avm_test/sv_avm_render_main_test.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/sv_avm_render_test.dir/build.make CMakeFiles/sv_avm_render_test.dir/src/sv_avm_test/sv_avm_render_main_test.cpp.s
-.PHONY : src/sv_avm_test/sv_avm_render_main_test.cpp.s
-
 src/svmcalibrate/svmcalibrate.o: src/svmcalibrate/svmcalibrate.cpp.o
 .PHONY : src/svmcalibrate/svmcalibrate.o
 
@@ -549,6 +525,30 @@ src/svrender/vehicle/vehiclerender.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/svrender.dir/build.make CMakeFiles/svrender.dir/src/svrender/vehicle/vehiclerender.cpp.s
 .PHONY : src/svrender/vehicle/vehiclerender.cpp.s
 
+sv_avm_test/sv_avm_render_main_test.o: sv_avm_test/sv_avm_render_main_test.cpp.o
+.PHONY : sv_avm_test/sv_avm_render_main_test.o
+
+# target to build an object file
+sv_avm_test/sv_avm_render_main_test.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sv_avm_render_test.dir/build.make CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.o
+.PHONY : sv_avm_test/sv_avm_render_main_test.cpp.o
+
+sv_avm_test/sv_avm_render_main_test.i: sv_avm_test/sv_avm_render_main_test.cpp.i
+.PHONY : sv_avm_test/sv_avm_render_main_test.i
+
+# target to preprocess a source file
+sv_avm_test/sv_avm_render_main_test.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sv_avm_render_test.dir/build.make CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.i
+.PHONY : sv_avm_test/sv_avm_render_main_test.cpp.i
+
+sv_avm_test/sv_avm_render_main_test.s: sv_avm_test/sv_avm_render_main_test.cpp.s
+.PHONY : sv_avm_test/sv_avm_render_main_test.s
+
+# target to generate assembly for a file
+sv_avm_test/sv_avm_render_main_test.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/sv_avm_render_test.dir/build.make CMakeFiles/sv_avm_render_test.dir/sv_avm_test/sv_avm_render_main_test.cpp.s
+.PHONY : sv_avm_test/sv_avm_render_main_test.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -565,9 +565,6 @@ help:
 	@echo "... svmcalibrate"
 	@echo "... svmparam"
 	@echo "... svrender"
-	@echo "... src/sv_avm_test/sv_avm_render_main_test.o"
-	@echo "... src/sv_avm_test/sv_avm_render_main_test.i"
-	@echo "... src/sv_avm_test/sv_avm_render_main_test.s"
 	@echo "... src/svmcalibrate/svmcalibrate.o"
 	@echo "... src/svmcalibrate/svmcalibrate.i"
 	@echo "... src/svmcalibrate/svmcalibrate.s"
@@ -607,6 +604,9 @@ help:
 	@echo "... src/svrender/vehicle/vehiclerender.o"
 	@echo "... src/svrender/vehicle/vehiclerender.i"
 	@echo "... src/svrender/vehicle/vehiclerender.s"
+	@echo "... sv_avm_test/sv_avm_render_main_test.o"
+	@echo "... sv_avm_test/sv_avm_render_main_test.i"
+	@echo "... sv_avm_test/sv_avm_render_main_test.s"
 .PHONY : help
 
 

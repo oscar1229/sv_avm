@@ -56,7 +56,20 @@ struct SvRunConfig {
     SV_S32 s32LiveViTimeoutMs = 5;
     SV_S32 s32LiveViMipiLanes = 4;
     SV_S32 s32LiveViMbps = 800;
+    // SV_TRUE forces the fallback images even when the camera is available.
+    SV_BOOL bUseFallbackImage = SV_FALSE;
+    // Fallback JPG dir used when the camera is unavailable; relative to repo root.
+    std::string strFallbackImageDir = "sv_avm_test/res";
+    // Offscreen output path used only when no display is present; empty disables it.
+    std::string strOffscreenOutputPath = "";
 };
+
+// config.json lives at the repo root and is read as ../config.json from build/,
+// so paths inside it are resolved relative to the repo root as well.
+static std::string ResolveRepoPath(const std::string& strRelative) {
+    if (strRelative.empty() || strRelative[0] == '/') return strRelative;
+    return std::string("../") + strRelative;
+}
 
 static void ResetImage(SV_IMAGE_S* pstImage) {
     memset(pstImage, 0, sizeof(*pstImage));
@@ -140,6 +153,14 @@ static void LoadConfigJson(const char* s8Path, SvRunConfig* pstCfg) {
     parseInt("live_vi_timeout_ms", &pstCfg->s32LiveViTimeoutMs, SV_TRUE);
     parseInt("live_vi_mipi_lanes", &pstCfg->s32LiveViMipiLanes);
     parseInt("live_vi_mbps", &pstCfg->s32LiveViMbps);
+
+    auto parseStr = [&](const char* key, std::string* out) {
+        std::string v;
+        if (findVal(key, &v) && !v.empty()) *out = v;
+    };
+    parseBool("use_fallback_image", &pstCfg->bUseFallbackImage);
+    parseStr("fallback_image_dir", &pstCfg->strFallbackImageDir);
+    parseStr("offscreen_output_path", &pstCfg->strOffscreenOutputPath);
 }
 
 static void ApplyArgs(int argc, char* argv[], SvRunConfig* pstCfg) {
@@ -304,6 +325,90 @@ static SV_BOOL LoadJPGImageNV12Dma(const char* s8JPGFileName, SV_IMAGE_S* pstIma
     pstImage->u32Stride[1] = (SV_U32)s32W;
     pstImage->u32PlaneOffset[1] = (SV_U32)(s32W * s32H);
     return SV_TRUE;
+}
+
+// Loads a JPG as a UYVY dma-buf so fallback frames match the pixel format the
+// live VI path produces, keeping the render path identical for both sources.
+static SV_BOOL LoadJPGImageUYVYDma(const char* s8JPGFileName, SV_IMAGE_S* pstImage) {
+    ResetImage(pstImage);
+    cv::Mat mBgr = cv::imread(s8JPGFileName);
+    if (mBgr.empty() || 3 != mBgr.channels()) {
+        LOG(ERROR) << "Failed to load/validate image: " << s8JPGFileName;
+        return SV_FALSE;
+    }
+    const SV_S32 s32W = mBgr.cols;
+    const SV_S32 s32H = mBgr.rows;
+    if ((s32W & 1) || (s32H & 1)) {
+        LOG(ERROR) << "UYVY needs even dimensions, got " << s32W << "x" << s32H << ": " << s8JPGFileName;
+        return SV_FALSE;
+    }
+
+    cv::Mat mI420;
+    cvtColor(mBgr, mI420, cv::COLOR_BGR2YUV_I420);
+    const size_t szY = (size_t)s32W * s32H;
+    const size_t szTotal = szY * 2;   // UYVY packs 2 bytes per pixel
+
+    SV_S32 s32Fd = DmaHeapAlloc(szTotal);
+    if (s32Fd < 0) return SV_FALSE;
+    SV_U8* pMap = (SV_U8*)mmap(NULL, szTotal, PROT_READ | PROT_WRITE, MAP_SHARED, s32Fd, 0);
+    if (MAP_FAILED == pMap) {
+        close(s32Fd);
+        return SV_FALSE;
+    }
+
+    const SV_U8* pY = mI420.ptr<SV_U8>(0);
+    const SV_U8* pU = pY + szY;
+    const SV_U8* pV = pU + szY / 4;
+    const SV_S32 s32ChromaW = s32W / 2;
+    for (SV_S32 y = 0; y < s32H; ++y) {
+        const SV_U8* pYRow = pY + (size_t)y * s32W;
+        const SV_U8* pURow = pU + (size_t)(y / 2) * s32ChromaW;
+        const SV_U8* pVRow = pV + (size_t)(y / 2) * s32ChromaW;
+        SV_U8* pDst = pMap + (size_t)y * s32W * 2;
+        for (SV_S32 x = 0; x < s32ChromaW; ++x) {
+            pDst[4 * x + 0] = pURow[x];
+            pDst[4 * x + 1] = pYRow[2 * x];
+            pDst[4 * x + 2] = pVRow[x];
+            pDst[4 * x + 3] = pYRow[2 * x + 1];
+        }
+    }
+    msync(pMap, szTotal, MS_SYNC);
+    munmap(pMap, szTotal);
+
+    pstImage->dataPtr = NULL;
+    pstImage->s32ImageType = SV_IMAGE_TYPE_UYVY;
+    pstImage->stImageSize.s32Width = s32W;
+    pstImage->stImageSize.s32Height = s32H;
+    pstImage->s32DmaFd = s32Fd;
+    pstImage->u32Stride[0] = (SV_U32)s32W * 2U;
+    return SV_TRUE;
+}
+
+// Fills stOwnedFrames with 4 UYVY fallback frames from imagech0..3.jpg,
+// substituting an all-zero frame for any image that fails to load.
+static void LoadFallbackUYVYFrames(const SvRunConfig& stCfg, std::vector<SV_IMAGE_S>* pstFrames) {
+    const std::string strDir = ResolveRepoPath(stCfg.strFallbackImageDir);
+    LOG(INFO) << "Loading fallback images from: " << strDir;
+    for (SV_S32 i = 0; i < 4; ++i) {
+        char acPath[512];
+        snprintf(acPath, sizeof(acPath), "%s/imagech%d.jpg", strDir.c_str(), i);
+        SV_IMAGE_S stImage;
+        ResetImage(&stImage);
+        if (SV_TRUE == LoadJPGImageUYVYDma(acPath, &stImage)) {
+            LOG(INFO) << "Fallback ch" << i << " loaded: " << acPath
+                      << " (" << stImage.stImageSize.s32Width << "x" << stImage.stImageSize.s32Height << ")";
+            pstFrames->push_back(stImage);
+            continue;
+        }
+        LOG(WARNING) << "Fallback ch" << i << " unavailable (" << acPath << "), using all-zero frame";
+        SV_IMAGE_S stZero;
+        ResetImage(&stZero);
+        if (SV_TRUE == CreateZeroDmaFrame(stCfg.s32LiveViWidth, stCfg.s32LiveViHeight, SV_IMAGE_TYPE_UYVY, &stZero)) {
+            pstFrames->push_back(stZero);
+        } else {
+            LOG(ERROR) << "Failed to create all-zero fallback frame for channel " << i;
+        }
+    }
 }
 
 static std::vector<SV_IMAGE_S> LoadCameraFrames(SV_BOOL bZeroCopy) {
@@ -624,7 +729,11 @@ int main(int argc, char* argv[]) {
               << ", sleep_us=" << stCfg.s32SleepUs
               << ", grid_subdiv=" << stCfg.s32GridSubdiv
               << ", live_vi=" << stCfg.s32LiveViWidth << "x" << stCfg.s32LiveViHeight
-              << " timeout=" << stCfg.s32LiveViTimeoutMs << "ms";
+              << " timeout=" << stCfg.s32LiveViTimeoutMs << "ms"
+              << ", use_fallback_image=" << (stCfg.bUseFallbackImage ? "true" : "false")
+              << ", fallback_image_dir=" << stCfg.strFallbackImageDir
+              << ", offscreen_output_path="
+              << (stCfg.strOffscreenOutputPath.empty() ? "(disabled)" : stCfg.strOffscreenOutputPath);
 
     const char* s8XmlFile = "./_aParam.xml";
     const char* s8DaeFile = "./res/concept_BUS cycles.dae";
@@ -635,9 +744,19 @@ int main(int argc, char* argv[]) {
     std::vector<SV_CAMERA_PARAMS_S> stCameraParamsVector;
     LoadParamsFromXml(s8XmlFile, &stVehicleSize, &stCameraParamsVector);
 
+    // Must precede InnerSV_CreateDisplay: it decides whether a missing display
+    // falls back to offscreen rendering instead of aborting.
+    if (!stCfg.strOffscreenOutputPath.empty()) {
+        svrender::display::InnerSV_SetOffscreenConfig(
+            ResolveRepoPath(stCfg.strOffscreenOutputPath).c_str(),
+            stCfg.s32LiveViWidth, stCfg.s32LiveViHeight);
+    }
+
     svrender::display::InnerSV_CreateDisplay(NULL, NULL);
+    const SV_BOOL bOffscreen = svrender::display::InnerSV_bIsOffscreenMode();
     SV_SIZE_S stSize = svrender::display::InnerSV_GetDisplayFrameSize();
-    LOG(INFO) << "Display size: " << stSize.s32Width << "x" << stSize.s32Height;
+    LOG(INFO) << "Render target: " << (bOffscreen ? "offscreen (no display)" : "display")
+              << ", size: " << stSize.s32Width << "x" << stSize.s32Height;
 
     svrender::mvp::InnerSV_MvCalss stMvClass;
     stMvClass.Initialized();
@@ -652,23 +771,43 @@ int main(int argc, char* argv[]) {
     std::vector<SV_IMAGE_S> stImageVect;
     MppViFrameSource stLiveSource;
 
+    SV_BOOL bCameraLive = SV_FALSE;
     if (stCfg.bLiveVi) {
-        LOG(INFO) << "Preparing 4 all-zero UYVY dma-buf fallback frames";
-        for (SV_S32 i = 0; i < 4; ++i) {
-            SV_IMAGE_S stZero;
-            if (SV_TRUE != CreateZeroDmaFrame(stCfg.s32LiveViWidth, stCfg.s32LiveViHeight, SV_IMAGE_TYPE_UYVY, &stZero)) {
-                LOG(ERROR) << "Failed to create zero dma-buf fallback frame for channel " << i;
+        // Open the camera first: its availability decides whether per-frame
+        // channels fall back to all-zero buffers or to static JPG images.
+        // use_fallback_image skips the camera entirely and forces the images.
+        if (SV_TRUE == stCfg.bUseFallbackImage) {
+            LOG(INFO) << "use_fallback_image=true; skipping camera and using static images";
+        } else {
+            bCameraLive = stLiveSource.Open(stCfg);
+        }
+        if (SV_TRUE == bCameraLive) {
+            LOG(INFO) << "Preparing 4 all-zero UYVY dma-buf fallback frames";
+            for (SV_S32 i = 0; i < 4; ++i) {
+                SV_IMAGE_S stZero;
+                if (SV_TRUE != CreateZeroDmaFrame(stCfg.s32LiveViWidth, stCfg.s32LiveViHeight, SV_IMAGE_TYPE_UYVY, &stZero)) {
+                    LOG(ERROR) << "Failed to create zero dma-buf fallback frame for channel " << i;
+                    ReleaseCameraFrames(stOwnedFrames);
+                    svrender::display::InnerSV_DeleteDisplay(0);
+                    google::ShutdownGoogleLogging();
+                    return 1;
+                }
+                stOwnedFrames.push_back(stZero);
+            }
+        } else {
+            if (SV_TRUE != stCfg.bUseFallbackImage) {
+                LOG(WARNING) << "Live VI open failed; rendering static fallback images instead";
+            }
+            LoadFallbackUYVYFrames(stCfg, &stOwnedFrames);
+            if (stOwnedFrames.size() != 4) {
+                LOG(ERROR) << "Expected 4 fallback frames, got " << stOwnedFrames.size();
                 ReleaseCameraFrames(stOwnedFrames);
                 svrender::display::InnerSV_DeleteDisplay(0);
                 google::ShutdownGoogleLogging();
                 return 1;
             }
-            stOwnedFrames.push_back(stZero);
         }
         stImageVect = stOwnedFrames;
-        if (SV_TRUE != stLiveSource.Open(stCfg)) {
-            LOG(WARNING) << "Live VI open failed; all channels will stay all-zero";
-        }
     } else {
         stOwnedFrames = LoadCameraFrames(stCfg.bZeroCopy);
         stImageVect = stOwnedFrames;
@@ -698,7 +837,7 @@ int main(int argc, char* argv[]) {
     SV_F64 f64WinTexSum = 0.0, f64WinSubmitSum = 0.0, f64WinGpuWaitSum = 0.0;
     SV_F64 f64WinSwapSum = 0.0, f64WinRenderSum = 0.0;
     while (!g_bExit && (stCfg.s32Frames <= 0 || s32FrameCount < stCfg.s32Frames)) {
-        if (stCfg.bLiveVi) {
+        if (SV_TRUE == bCameraLive) {
             stImageVect = stOwnedFrames; // default every channel to the all-zero dma-buf for this frame
             stLiveSource.CaptureFrames(&stImageVect);
         }
@@ -722,7 +861,7 @@ int main(int argc, char* argv[]) {
         svrender::display::InnerSV_DisplaySwap();
         SV_NOW(t4);
 
-        if (stCfg.bLiveVi) stLiveSource.ReleasePending();
+        if (SV_TRUE == bCameraLive) stLiveSource.ReleasePending();
         if (stCfg.s32SleepUs > 0) usleep(stCfg.s32SleepUs);
         SV_NOW(t5);
 
@@ -792,6 +931,12 @@ int main(int argc, char* argv[]) {
 
     #undef SV_NOW
     #undef SV_MS
+
+    // Save the last rendered frame once the loop ends (frame budget reached or
+    // Ctrl+C). Offscreen mode skips eglSwapBuffers, so the buffer is still readable.
+    if (SV_TRUE == svrender::display::InnerSV_bIsOffscreenMode()) {
+        (void)svrender::display::InnerSV_bSaveOffscreenFrame();
+    }
 
     stLiveSource.Close();
     ReleaseCameraFrames(stOwnedFrames);
