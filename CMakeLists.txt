@@ -54,6 +54,20 @@ else()
     message(WARNING "MPP not found at ${MPP_ROOT}; --live-vi will be unavailable. Pass -DMPP_ROOT=<path> to enable it.")
 endif()
 
+# --- 安装后的 RPATH ---
+# CMake 默认在安装时剥离 RPATH，会导致安装后的 .so 找不到 OpenCV/MPP
+# (二者都不在系统默认搜索路径中)。这里显式写入依赖库目录，
+# 使 sv_avm_lib 这类只依赖 install 产物的工程无需设置 LD_LIBRARY_PATH。
+# 必须在 add_library/add_executable 之前设置，否则不会写入目标属性。
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+get_filename_component(_opencv_libdir "${OpenCV_DIR}/../.." ABSOLUTE)
+set(CMAKE_INSTALL_RPATH "$ORIGIN:${_opencv_libdir}")
+if(SV_AVM_MPP_LIB)
+    get_filename_component(_mpp_libdir "${SV_AVM_MPP_LIB}" DIRECTORY)
+    set(CMAKE_INSTALL_RPATH "$ORIGIN:${_opencv_libdir}:${_mpp_libdir}")
+endif()
+message(STATUS "Install RPATH: ${CMAKE_INSTALL_RPATH}")
+
 include_directories(
     ${CMAKE_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/..
@@ -111,6 +125,10 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
 endif()
 message(STATUS "Install prefix: ${CMAKE_INSTALL_PREFIX}")
 
+# CMake 默认在安装时剥离 RPATH，会导致安装后的 .so 找不到 OpenCV/MPP
+# (它们不在系统默认搜索路径中)。开启下面两项，把链接期的依赖目录写入安装后的 .so，
+# 使 sv_avm_lib 这类只依赖 install 产物的工程无需设置 LD_LIBRARY_PATH。
+
 # --- 安装：导出三个库到 install 目录 ---
 install(TARGETS svmparam svmcalibrate svrender
     LIBRARY DESTINATION lib
@@ -125,6 +143,35 @@ install(FILES
     ${CMAKE_SOURCE_DIR}/src/svmparam/svmparam.hpp
     DESTINATION include
 )
+
+# --- 安装：保持原有目录结构的头文件 ---
+# 库的使用者(如 sv_avm_lib 下的示例程序)沿用工程内的 include 写法，
+# 例如 #include "src/svrender/display/display.hpp"，因此需按原路径安装。
+# 只安装 .hpp；所有 .cpp 实现都编译进 .so，不对外提供。
+install(FILES ${CMAKE_SOURCE_DIR}/common/svtype.hpp
+    DESTINATION include/common)
+install(FILES ${CMAKE_SOURCE_DIR}/include/sv_avmcommon.hpp
+    DESTINATION include/include)
+install(FILES ${CMAKE_SOURCE_DIR}/src/svmparam/svmparam.hpp
+    DESTINATION include/src/svmparam)
+install(FILES ${CMAKE_SOURCE_DIR}/src/svrender/display/display.hpp
+    DESTINATION include/src/svrender/display)
+install(FILES ${CMAKE_SOURCE_DIR}/src/svrender/vehicle/vehiclerender.hpp
+    DESTINATION include/src/svrender/vehicle)
+install(FILES ${CMAKE_SOURCE_DIR}/src/svrender/camera/camerarender.hpp
+    DESTINATION include/src/svrender/camera)
+install(FILES ${CMAKE_SOURCE_DIR}/src/svrender/common/shader/glshader.hpp
+    DESTINATION include/src/svrender/common/shader)
+install(FILES ${CMAKE_SOURCE_DIR}/src/svrender/common/viewtransoform/viewtransform.hpp
+    DESTINATION include/src/svrender/common/viewtransoform)
+# glm 为第三方数学库(header-only),被上述头文件引用,需整体安装
+# 仅安装头文件(.hpp/.inl/.h),排除 glm 自带的两个 .cpp
+install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/svrender/common/glm
+    DESTINATION include/src/svrender/common
+    FILES_MATCHING
+        PATTERN "*.hpp"
+        PATTERN "*.inl"
+        PATTERN "*.h")
 
 # 测试程序
 set(TEST_DIR ${CMAKE_SOURCE_DIR}/sv_avm_test)
