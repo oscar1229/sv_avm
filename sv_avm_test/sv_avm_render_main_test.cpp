@@ -416,7 +416,7 @@ static void LoadFallbackUYVYFrames(const SvRunConfig& stCfg, std::vector<SV_IMAG
 
 static std::vector<SV_IMAGE_S> LoadCameraFrames(SV_BOOL bZeroCopy) {
     std::vector<SV_IMAGE_S> stImageVect;
-    const char* as8FileNames[4] = {"./res/imagech0.jpg", "./res/imagech1.jpg", "./res/imagech2.jpg", "./res/imagech3.jpg"};
+    const char* as8FileNames[4] = {"../sv_avm_test/res/imagech0.jpg", "../sv_avm_test/res/imagech1.jpg", "../sv_avm_test/res/imagech2.jpg", "../sv_avm_test/res/imagech3.jpg"};
     LOG(INFO) << "Image load mode: " << (bZeroCopy ? "NV12 dma_buf (zero-copy)" : "RGB (copy upload)");
     for (SV_S32 i = 0; i < 4; ++i) {
         SV_IMAGE_S stImage;
@@ -739,8 +739,8 @@ int main(int argc, char* argv[]) {
               << ", offscreen_output_path="
               << (stCfg.strOffscreenOutputPath.empty() ? "(disabled)" : stCfg.strOffscreenOutputPath);
 
-    const char* s8XmlFile = "./_aParam.xml";
-    const char* s8DaeFile = "./res/concept_BUS cycles.dae";
+    const char* s8XmlFile = "../sv_avm_test/_aParam.xml";
+    const char* s8DaeFile = "../sv_avm_test/res/concept_BUS cycles.dae";
     SV_F32 f32Translucency = 0.8;
     SV_BOWL_GRID_PARAM_S stGridParam = {1.7, (SV_S32)stCfg.s32GridSubdiv, 100, 0.05, 0.7};
 
