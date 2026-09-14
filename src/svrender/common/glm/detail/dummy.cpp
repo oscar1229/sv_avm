@@ -1,7 +1,7 @@
 /// @ref core
 /// @file glm/core/dummy.cpp
 ///
-/// GLM is a header only library. There is nothing to compile. 
+/// GLM is a header only library. There is nothing to compile.
 /// dummy.cpp exist only a wordaround for CMake file.
 
 /*
@@ -204,6 +204,6 @@ int main()
 	float b0 = normalizeDotB(b, b);
 	float c0 = normalizeDotC(c, c);
 */
-	return 0;
+    return 0;
 }
 #endif
