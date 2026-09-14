@@ -128,4 +128,4 @@ typedef struct _MuxChnStat {
 #endif
 #endif /* __cplusplus */
 
-#endif /* __MUX_TYPE_H__ */
+#endif // MUX_TYPE_H

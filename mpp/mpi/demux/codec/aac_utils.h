@@ -57,4 +57,4 @@ S32 AAC_ParseAsc(const U8 *pu8Data, U32 u32Len, U8 *pu8Profile, U8 *pu8SampleRat
 }
 #endif
 
-#endif /* __AAC_UTILS_H__ */
+#endif // AAC_UTILS_H

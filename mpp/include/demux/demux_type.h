@@ -111,4 +111,4 @@ typedef struct _DemuxChnAttr {
 #endif
 #endif /* __cplusplus */
 
-#endif /* __DEMUX_TYPE_H__ */
+#endif // DEMUX_TYPE_H
