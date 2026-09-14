@@ -9,6 +9,9 @@
 /// Defines additional matrix inverting functions.
 /// <glm/gtc/matrix_inverse.hpp> need to be included to use these functionalities.
 
+#ifndef MATRIX_INVERSE_HPP
+#define MATRIX_INVERSE_HPP
+
 #pragma once
 
 // Dependencies
@@ -19,31 +22,33 @@
 #include "../mat4x4.hpp"
 
 #if GLM_MESSAGES == GLM_MESSAGES_ENABLED && !defined(GLM_EXT_INCLUDED)
-#	pragma message("GLM: GLM_GTC_matrix_inverse extension included")
+#       pragma message("GLM: GLM_GTC_matrix_inverse extension included")
 #endif
 
 namespace glm
 {
-	/// @addtogroup gtc_matrix_inverse
-	/// @{
+    /// @addtogroup gtc_matrix_inverse
+    /// @{
 
-	/// Fast matrix inverse for affine matrix.
-	/// 
-	/// @param m Input matrix to invert.
-	/// @tparam genType Squared floating-point matrix: half, float or double. Inverse of matrix based of half-precision floating point value is highly innacurate.
-	/// @see gtc_matrix_inverse
-	template <typename genType> 
-	GLM_FUNC_DECL genType affineInverse(genType const & m);
+    /// Fast matrix inverse for affine matrix.
+    ///
+    /// @param m Input matrix to invert.
+    /// @tparam genType Squared floating-point matrix: half, float or double. Inverse of matrix based of half-precision floating point value is highly innacurate.
+    /// @see gtc_matrix_inverse
+    template <typename genType>
+    GLM_FUNC_DECL genType affineInverse(genType const & m);
 
-	/// Compute the inverse transpose of a matrix.
-	/// 
-	/// @param m Input matrix to invert transpose.
-	/// @tparam genType Squared floating-point matrix: half, float or double. Inverse of matrix based of half-precision floating point value is highly innacurate.
-	/// @see gtc_matrix_inverse
-	template <typename genType>
-	GLM_FUNC_DECL genType inverseTranspose(genType const & m);
+    /// Compute the inverse transpose of a matrix.
+    ///
+    /// @param m Input matrix to invert transpose.
+    /// @tparam genType Squared floating-point matrix: half, float or double. Inverse of matrix based of half-precision floating point value is highly innacurate.
+    /// @see gtc_matrix_inverse
+    template <typename genType>
+    GLM_FUNC_DECL genType inverseTranspose(genType const & m);
 
-	/// @}
+    /// @}
 }//namespace glm
 
 #include "matrix_inverse.inl"
+
+#endif  // MATRIX_INVERSE_HPP

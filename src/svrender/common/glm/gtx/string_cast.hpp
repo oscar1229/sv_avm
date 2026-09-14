@@ -14,6 +14,9 @@
 /// <glm/gtx/string_cast.hpp> need to be included to use these functionalities.
 /// This extension is not supported with CUDA
 
+#ifndef STRING_CAST_HPP
+#define STRING_CAST_HPP
+
 #pragma once
 
 // Dependency:
@@ -24,24 +27,26 @@
 #include <string>
 
 #if(GLM_COMPILER & GLM_COMPILER_CUDA)
-#	error "GLM_GTX_string_cast is not supported on CUDA compiler"
+#       error "GLM_GTX_string_cast is not supported on CUDA compiler"
 #endif
 
 #if GLM_MESSAGES == GLM_MESSAGES_ENABLED && !defined(GLM_EXT_INCLUDED)
-#	pragma message("GLM: GLM_GTX_string_cast extension included")
+#       pragma message("GLM: GLM_GTX_string_cast extension included")
 #endif
 
 namespace glm
 {
-	/// @addtogroup gtx_string_cast
-	/// @{
+    /// @addtogroup gtx_string_cast
+    /// @{
 
-	/// Create a string from a GLM vector or matrix typed variable.
-	/// @see gtx_string_cast extension.
-	template <template <typename, precision> class matType, typename T, precision P>
-	GLM_FUNC_DECL std::string to_string(matType<T, P> const & x);
+    /// Create a string from a GLM vector or matrix typed variable.
+    /// @see gtx_string_cast extension.
+    template <template <typename, precision> class matType, typename T, precision P>
+    GLM_FUNC_DECL std::string to_string(matType<T, P> const & x);
 
-	/// @}
+    /// @}
 }//namespace glm
 
 #include "string_cast.inl"
+
+#endif  // STRING_CAST_HPP

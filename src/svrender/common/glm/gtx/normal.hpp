@@ -11,29 +11,34 @@
 ///
 /// <glm/gtx/normal.hpp> need to be included to use these functionalities.
 
+#ifndef NORMAL_HPP
+#define NORMAL_HPP
+
 #pragma once
 
 // Dependency:
 #include "../glm.hpp"
 
 #if GLM_MESSAGES == GLM_MESSAGES_ENABLED && !defined(GLM_EXT_INCLUDED)
-#	pragma message("GLM: GLM_GTX_normal extension included")
+#       pragma message("GLM: GLM_GTX_normal extension included")
 #endif
 
 namespace glm
 {
-	/// @addtogroup gtx_normal
-	/// @{
+    /// @addtogroup gtx_normal
+    /// @{
 
-	//! Computes triangle normal from triangle points. 
-	//! From GLM_GTX_normal extension.
-	template <typename T, precision P> 
-	GLM_FUNC_DECL tvec3<T, P> triangleNormal(
-		tvec3<T, P> const & p1, 
-		tvec3<T, P> const & p2, 
-		tvec3<T, P> const & p3);
+    //! Computes triangle normal from triangle points.
+    //! From GLM_GTX_normal extension.
+    template <typename T, precision P>
+    GLM_FUNC_DECL tvec3<T, P> triangleNormal(
+        tvec3<T, P> const & p1,
+        tvec3<T, P> const & p2,
+        tvec3<T, P> const & p3);
 
-	/// @}
+    /// @}
 }//namespace glm
 
 #include "normal.inl"
+
+#endif  // NORMAL_HPP
