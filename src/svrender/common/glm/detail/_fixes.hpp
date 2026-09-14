@@ -1,8 +1,6 @@
 /// @ref core
 /// @file glm/detail/_fixes.hpp
 
-#ifndef _FIXES_HPP
-#define _FIXES_HPP
 #include <cmath>
 
 //! Workaround for compatibility with other libraries
@@ -30,4 +28,3 @@
 #undef log2
 #endif
 
-#endif  // _FIXES_HPP
