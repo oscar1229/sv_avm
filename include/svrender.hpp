@@ -3,8 +3,8 @@
  *
  */
 
-#ifndef SV_AVM_SVRENDER_HPP_
-#define SV_AVM_SVRENDER_HPP_
+#ifndef SVRENDER_HPP
+#define SVRENDER_HPP
 #pragma once
 #include <pthread.h>
 #include <string>
@@ -23,40 +23,40 @@ typedef void (*CALLBACK_PUTFRAMEVECT)( std::vector<SV_IMAGE_S>&);//释放摄像�
 typedef SV_BOOL (*CALLBACK_GET_RENDER2D_FLAG)(SV_VOID);//回调，是否为2D显示模式
 
 enum {
-  SV_ENUM_VIEW_3D=0,// 3D显示模式
-  SV_ENUM_VIEW_DUAL_LEFT,//俯视+左视
-  SV_ENUM_VIEW_DUAL_RIGHT,//俯视+右
-  SV_ENUM_VIEW_DUAL_FRONT,//俯视+前
-  SV_ENUM_VIEW_DUAL_BACK,//俯视+后
-  SV_ENUM_VIEW_QUAD,//四分割显示
-  SV_ENUM_VIEW_BUTT
+SV_ENUM_VIEW_3D = 0, // 3D显示模式
+SV_ENUM_VIEW_DUAL_LEFT, //俯视+左视
+SV_ENUM_VIEW_DUAL_RIGHT, //俯视+右
+SV_ENUM_VIEW_DUAL_FRONT, //俯视+前
+SV_ENUM_VIEW_DUAL_BACK, //俯视+后
+SV_ENUM_VIEW_QUAD, //四分割显示
+SV_ENUM_VIEW_BUTT
 };
 
 enum {
-  SV_ENUM_CLASSIC_3DVIEW_TLEFT=0,//左转弯视角
-  SV_ENUM_CLASSIC_3DVIEW_TRIGHT,//右转弯视角
-  SV_ENUM_CLASSIC_3DVIEW_FORMAT,//前世
-  SV_ENUM_CLASSIC_3DVIEW_BACKWARD,//倒车
-  SV_ENUM_CLASSIC_3DVIEW_SCAN,
+SV_ENUM_CLASSIC_3DVIEW_TLEFT = 0, //左转弯视角
+SV_ENUM_CLASSIC_3DVIEW_TRIGHT, //右转弯视角
+SV_ENUM_CLASSIC_3DVIEW_FORMAT, //前世
+SV_ENUM_CLASSIC_3DVIEW_BACKWARD, //倒车
+SV_ENUM_CLASSIC_3DVIEW_SCAN,
 };
 
 //开启Render任务需要的回调函数
 struct SV_RENDER_CONFIG_S {
-  CALLBACK_GETVEHICLEDAE pCallGetVehicleDae;
-  CALLBACK_GETBOWLGRID  pCallGetBowlGridParam;
-  CALLBACK_GETFRAMEVECT pCallGetFrameS;
-  CALLBACK_PUTFRAMEVECT pCallPutFrameS;
-  CALLBACK_GET_RENDER2D_FLAG pCallGet2DModeFlag;
-  SV_S8* s8XmlFileName; //标定结果xml文件路径
-  SV_F32 f32VehicleTranslucency;//车模半透明度0.5-1.0
-  SV_S8* s8KeyBoardDevName; //键盘设备全路径名称
-  SV_S8* s8MouseDevName; //鼠标设备全路径名称
+CALLBACK_GETVEHICLEDAE pCallGetVehicleDae;
+CALLBACK_GETBOWLGRID  pCallGetBowlGridParam;
+CALLBACK_GETFRAMEVECT pCallGetFrameS;
+CALLBACK_PUTFRAMEVECT pCallPutFrameS;
+CALLBACK_GET_RENDER2D_FLAG pCallGet2DModeFlag;
+SV_S8* s8XmlFileName; //标定结果xml文件路径
+SV_F32 f32VehicleTranslucency;//车模半透明度0.5-1.0
+SV_S8* s8KeyBoardDevName; //键盘设备全路径名称
+SV_S8* s8MouseDevName; //鼠标设备全路径名称
 };
 
 //@brief 虚拟视点参数
 struct SV_RENDER_VIRTULVIEW_PARAM_S {
-  SV_POINT3F32_S stCamPosition;
-  SV_POINT2F32_S stCamRotate;
+SV_POINT3F32_S stCamPosition;
+SV_POINT2F32_S stCamRotate;
 };
 //@brief 开启全景映射任务
 //@param in stCallBack 回调函数结构体
@@ -67,7 +67,7 @@ struct SV_RENDER_VIRTULVIEW_PARAM_S {
 #ifdef EGL_USE_X11
 SV_BOOL SV_RenderTaskOpen(const SV_RENDER_CONFIG_S& stConfigs);
 #else
-SV_BOOL SV_RenderTaskOpen(const SV_RENDER_CONFIG_S& stConfigs,const SV_S32& s32FbDevIdx);
+SV_BOOL SV_RenderTaskOpen(const SV_RENDER_CONFIG_S& stConfigs, const SV_S32& s32FbDevIdx);
 #endif
 //@brief 关闭全景映射任务
 //@remarks 销毁映射线程，并去注册回调函数
@@ -88,7 +88,7 @@ SV_BOOL SV_RenderTaskUpdateMesh(SV_VOID);
 //           右转 stCamRot={1.05,-0.75} stCamPosition采用默认值{0,0.1，-3.45}
 //           常态显示 stCamRot采用默认值，即{1.75，,0.75} stCamPosition采用默认值
 //
-SV_BOOL SV_RenderTransform(const SV_S32& S32DisplayMode,const SV_RENDER_VIRTULVIEW_PARAM_S& stVirtualParam);
+SV_BOOL SV_RenderTransform(const SV_S32& S32DisplayMode, const SV_RENDER_VIRTULVIEW_PARAM_S& stVirtualParam);
 //@brief 获取当前的虚拟视点参数
 //@param out pstVirtualParam 虚拟视点参数
 //@return 任务未创建，返回SV_FALSE;
@@ -100,7 +100,7 @@ SV_BOOL SV_GetRenderVirtualViewParams(SV_RENDER_VIRTULVIEW_PARAM_S* pstVirtualPa
 SV_VOID SV_RenderClassicalView(const SV_S32& s32ClassicalView);
 
 
-}
-}
-}
-#endif /* SV_AVM_SVRENDER_HPP_ */
+}  // namespace svrender
+}  // namespace sv_avm
+}  // namespace sm
+#endif  // SVRENDER_HPP

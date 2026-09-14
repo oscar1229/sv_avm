@@ -24,7 +24,7 @@ extern "C" {
 
 /* AAC ADTS header info */
 typedef struct _AdtsHeader {
-    U8 u8Profile;       /* AAC profile (1=LC, 2=HE) */
+    U8 u8Profile;       /* AAC profile (1 = LC, 2 = HE) */
     U8 u8SampleRateIdx; /* Sample rate index */
     U8 u8ChannelConfig; /* Channel configuration */
     U16 u16FrameLen;    /* Frame length including header */

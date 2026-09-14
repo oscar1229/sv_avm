@@ -214,7 +214,7 @@ int main(int argc, char *argv[]) {
     char szRecPath[160];
     S32 ret;
     S32 vi_enabled_cnt = 0;
-    S32 venc_ready = 0; /* bitmask: 1=rec, 2=snap */
+    S32 venc_ready = 0; /* bitmask: 1 = rec, 2 = snap */
     S32 bound = 0;
     int grabbed = 0;
     int snap_idx = 0;

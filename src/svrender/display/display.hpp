@@ -3,8 +3,8 @@
  *
  */
 
-#ifndef SV_SVM_SVRENDER_DISPLAY_DISPLAY_HPP_
-#define SV_SVM_SVRENDER_DISPLAY_DISPLAY_HPP_
+#ifndef DISPLAY_HPP
+#define DISPLAY_HPP
 
 #pragma once
 
@@ -19,17 +19,17 @@ namespace display {
 
 enum {
   //键盘事件
-  InnerSV_ENUM_KEY_LEFT_E=0x10,
-  InnerSV_ENUM_KEY_RIGHT_E,
-  InnerSV_ENUM_KEY_UP_E,
-  InnerSV_ENUM_KEY_DOWN_E,
-  InnerSV_ENUM_KEY_QUARD_E,
-  InnerSV_ENUM_KEY_SCAN_E,
+InnerSV_ENUM_KEY_LEFT_E = 0x10,
+InnerSV_ENUM_KEY_RIGHT_E,
+InnerSV_ENUM_KEY_UP_E,
+InnerSV_ENUM_KEY_DOWN_E,
+InnerSV_ENUM_KEY_QUARD_E,
+InnerSV_ENUM_KEY_SCAN_E,
   //鼠标事件
-  InnerSV_ENUM_M_SCROLL_UP_E =0x20,
-  InnerSV_ENUM_M_SCROLL_DOWN_E,
-  InnerSV_ENUM_M_MOVE_E,
-  InnerSV_ENUM_KEY_NONE_E=0xFF,
+InnerSV_ENUM_M_SCROLL_UP_E = 0x20,
+InnerSV_ENUM_M_SCROLL_DOWN_E,
+InnerSV_ENUM_M_MOVE_E,
+InnerSV_ENUM_KEY_NONE_E = 0xFF,
 };
 //@remarks 使用示例如下：
 //#ifdef EGL_USE_X11
@@ -50,7 +50,7 @@ enum {
 //@remarks 如果Display已创建，则调用此函数会直接返回，切记
 //         InnerSV_CreateDisplay与InnerSV_DeleteDisplay必须成对出现
 #ifdef EGL_USE_X11
-SV_VOID InnerSV_CreateDisplay(const char* s8KeyBoardDev,const char* s8MouseDev);
+SV_VOID InnerSV_CreateDisplay(const char* s8KeyBoardDev, const char* s8MouseDev);
 #else
 //@brief 开启基于FB的EGL窗口显示
 //@param in s32FbDevIdx Fb设备好0-3
@@ -58,7 +58,7 @@ SV_VOID InnerSV_CreateDisplay(const char* s8KeyBoardDev,const char* s8MouseDev);
 //       in s8MouseDev鼠标设备
 //@remarks 如果Display已创建，则调用此函数会直接返回，切记
 //         InnerSV_CreateDisplay与InnerSV_DeleteDisplay必须成对出现
-SV_VOID InnerSV_CreateDisplay(const SV_S32& s32FbDevIdx,const char* s8KeyBoardDev,const char* s8MouseDev);
+SV_VOID InnerSV_CreateDisplay(const SV_S32& s32FbDevIdx, const char* s8KeyBoardDev, const char* s8MouseDev);
 #endif
 //@brief 清空当前的绘图窗口
 //@remarks 此函数需在每次EGL窗口绘制前调用
@@ -88,7 +88,7 @@ SV_S32 InnerSV_DisplayNextEvent(SV_VOID);
 //       in s32Height 离屏渲染高度
 //@remarks 必须在InnerSV_CreateDisplay之前调用才生效。
 //         仅当显示器不可用时启用;显示器可用时该配置被忽略。
-SV_VOID InnerSV_SetOffscreenConfig(const char* s8OutputPath,const SV_S32& s32Width,const SV_S32& s32Height);
+SV_VOID InnerSV_SetOffscreenConfig(const char* s8OutputPath, const SV_S32& s32Width, const SV_S32& s32Height);
 
 //@brief 强制使用离屏渲染,即使显示器可用
 //@param in bForce SV_TRUE 强制离屏 SV_FALSE 自动检测(默认)
@@ -105,10 +105,10 @@ SV_BOOL InnerSV_bIsOffscreenMode(SV_VOID);
 //@remarks 仅离屏模式下有效;需在InnerSV_DeleteDisplay之前调用
 SV_BOOL InnerSV_bSaveOffscreenFrame(SV_VOID);
 
-}//end of display
-}//end of svrender
-}//end of sv_avm
-}//end of sm
+}  // namespace display
+}  // namespace svrender
+}  // namespace sv_avm
+}  // namespace sm
 
 
-#endif /* SV_SVM_SVRENDER_DISPLAY_DISPLAY_HPP_ */
+#endif  // DISPLAY_HPP

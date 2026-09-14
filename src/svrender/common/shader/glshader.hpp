@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef SV_SVM_SVRENDER_GLSHADER_GLSHADER_HPP_
-#define SV_SVM_SVRENDER_GLSHADER_GLSHADER_HPP_
+#ifndef GLSHADER_HPP
+#define GLSHADER_HPP
 #pragma once
 
 #include<string>
@@ -29,8 +29,8 @@ namespace glshader {
 //          }
 class InnerSV_ProgramClass {
 public:
-  explicit InnerSV_ProgramClass();
-  ~InnerSV_ProgramClass();
+explicit InnerSV_ProgramClass();
+~InnerSV_ProgramClass();
 
    //@brief           Load shaders
    //
@@ -43,40 +43,40 @@ public:
    //                  specified by program.
    //该函数中创建的相关对象，在析构函数中释放
    //
-  SV_BOOL LoadShaders(const std::string& s8V_Shader, const std::string& s8_P_shader);
+SV_BOOL LoadShaders(const std::string& s8V_Shader, const std::string& s8_P_shader);
   //@brief 清除加载的着色器程序
   //@remarks  The function frees the memory and invalidates the name associated with the shader object
   //       specified by shader.
-  SV_VOID DestroyShaders(SV_VOID);
+SV_VOID DestroyShaders(SV_VOID);
   //@brief 返回着色器程序句柄
-  inline SV_U32 GetHandle() {return stProgram.u32ProgramHandle;};
+inline SV_U32 GetHandle() {return stProgram.u32ProgramHandle;};
 private:
-  struct programInfo
-  {
-      SV_U32 u32VertShaderNum;   // Vertex shader id
-      SV_U32 u32PixelShaderNum;  // Pixel shader id
-      SV_U32 u32ProgramHandle;   // Program id
-  };
+struct programInfo
+{
+        SV_U32 u32VertShaderNum;   // Vertex shader id
+        SV_U32 u32PixelShaderNum;  // Pixel shader id
+        SV_U32 u32ProgramHandle;   // Program id
+};
   //显式申明移动构造函数和赋值运算符，禁用当前类的复制，只声明，不做定义
-  InnerSV_ProgramClass(const InnerSV_ProgramClass&);
-  InnerSV_ProgramClass& operator = (const InnerSV_ProgramClass& m);
+InnerSV_ProgramClass(const InnerSV_ProgramClass&);
+InnerSV_ProgramClass& operator = (const InnerSV_ProgramClass& m);
 
    // @brief           Compile a vertex or pixel shader
    // @param          const std::string& s8ShaderStr- vertix or pixel shader name
    //                 const SV_U32& s32Num- vertix or pixel shader number
    // @return          The function returns 0 if shaders were compilled successfully. Otherwise -1 has been returned.
    // @remarks         The function compiles vertex or pixel shader.
-  SV_BOOL CompileShader(const SV_S8* ps8ShaderStr , const SV_U32& s32Num);
+SV_BOOL CompileShader(const SV_S8* ps8ShaderStr , const SV_U32& s32Num);
 
-  programInfo stProgram;    // GL program
+programInfo stProgram;    // GL program
 };
 
-}//end of glshader
-}//end of svrender
-}//end of sv_avm
-}//end of sm
+}  // namespace glshader
+}  // namespace svrender
+}  // namespace sv_avm
+}  // namespace sm
 
 
 
 
-#endif /* SV_SVM_SVRENDER_GLSHADER_GLSHADER_HPP_ */
+#endif  // GLSHADER_HPP

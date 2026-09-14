@@ -5,8 +5,8 @@
  *
  */
 
-#ifndef SV_SVM_SVRENDER_GLSHADER_SHADER_HPP_
-#define SV_SVM_SVRENDER_GLSHADER_SHADER_HPP_
+#ifndef SHADER_HPP
+#define SHADER_HPP
 #pragma once
 namespace sm {
 namespace sv_avm {
@@ -169,7 +169,7 @@ static const char s_f_shader_model[] =
         "    //Blin-Phong model \n"
         "    finalColor = ambient; \n"
         "    float lambertTerm = dot(L, N); \n"
-        "    if(lambertTerm >= 0.0) \n"
+        "    if (lambertTerm >= 0.0) \n"
         "    { \n"
         "        finalColor +=  diffuse * lambertTerm; \n"
         "    } \n"
@@ -177,10 +177,10 @@ static const char s_f_shader_model[] =
         "    fragColor = vec4(finalColor,translucence); \n"
         "} \n";
 
-}//end of glshader
-}//end of svrender
-}//end of sv_avm
-}//end of sm
+}  // namespace glshader
+}  // namespace svrender
+}  // namespace sv_avm
+}  // namespace sm
 
 
-#endif /* SV_SVM_SVRENDER_GLSHADER_SHADER_HPP_ */
+#endif  // SHADER_HPP

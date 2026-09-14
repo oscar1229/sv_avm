@@ -173,7 +173,7 @@ int main(int argc, char *argv[]) {
     S32 uvc_dev_on = 0;
     S32 uvc_chn_on = 0;
     S32 vdec_on = 0;
-    S32 venc_ready = 0; /* bitmask: 1=rec, 2=snap */
+    S32 venc_ready = 0; /* bitmask: 1 = rec, 2 = snap */
     int processed = 0;
     int recorded = 0;
     int snap_idx = 0;

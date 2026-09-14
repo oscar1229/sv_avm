@@ -183,8 +183,8 @@ static VOID box_write_avcc(BoxBuilder *pBld, const MuxParamSets *pSets) {
     box_u8(pBld, pSets->u32SpsLen > 1 ? pSets->au8Sps[1] : 0x42); /* AVCProfileIndication */
     box_u8(pBld, pSets->u32SpsLen > 2 ? pSets->au8Sps[2] : 0x00); /* profile_compatibility */
     box_u8(pBld, pSets->u32SpsLen > 3 ? pSets->au8Sps[3] : 0x1E); /* AVCLevelIndication */
-    box_u8(pBld, 0xFF);                        /* 6 bits reserved + lengthSizeMinusOne=3 */
-    box_u8(pBld, 0xE1);                        /* 3 bits reserved + numOfSPS=1 */
+    box_u8(pBld, 0xFF);                        /* 6 bits reserved + lengthSizeMinusOne = 3 */
+    box_u8(pBld, 0xE1);                        /* 3 bits reserved + numOfSPS = 1 */
     box_be16(pBld, (U16)pSets->u32SpsLen);
     box_bytes(pBld, pSets->au8Sps, pSets->u32SpsLen);
     box_u8(pBld, 1);                           /* numOfPPS */
@@ -212,7 +212,7 @@ static VOID box_write_hvcc(BoxBuilder *pBld, const MuxParamSets *pSets) {
          *   general_profile_compatibility_flags         :  4 bytes
          *   general_constraint_indicator_flags (48-bit) :  6 bytes
          *   general_level_idc                           :  1 byte */
-        box_u8(pBld, 0x01);          /* profile_space=0,tier=0,profile_idc=1 */
+        box_u8(pBld, 0x01);          /* profile_space = 0, tier = 0, profile_idc = 1 */
         box_be32(pBld, 0x60000000);  /* general_profile_compatibility_flags */
         box_be32(pBld, 0x00000000);  /* constraint_indicator[0..3] */
         box_be16(pBld, 0x0000);      /* constraint_indicator[4..5] */
@@ -224,7 +224,7 @@ static VOID box_write_hvcc(BoxBuilder *pBld, const MuxParamSets *pSets) {
     box_u8(pBld, 0xF8);         /* bitDepthLumaMinus8 */
     box_u8(pBld, 0xF8);         /* bitDepthChromaMinus8 */
     box_be16(pBld, 0x0000);     /* avgFrameRate */
-    box_u8(pBld, 0x0F);         /* constantFrameRate/numTemporalLayers/lengthSizeMinusOne=3 */
+    box_u8(pBld, 0x0F);         /* constantFrameRate/numTemporalLayers/lengthSizeMinusOne = 3 */
 
     /* numOfArrays: VPS + SPS + PPS = 3 when VPS is available.
      * When VPS is absent (u32VpsLen == 0), write only SPS + PPS (2 arrays)
@@ -233,7 +233,7 @@ static VOID box_write_hvcc(BoxBuilder *pBld, const MuxParamSets *pSets) {
     if (pSets->u32VpsLen > 0) {
         box_u8(pBld, 3);            /* numOfArrays: VPS, SPS, PPS */
         /* VPS array */
-        box_u8(pBld, 0xA0);         /* array_completeness=1 + NAL_unit_type=32 (VPS) */
+        box_u8(pBld, 0xA0);         /* array_completeness = 1 + NAL_unit_type = 32 (VPS) */
         box_be16(pBld, 1);
         box_be16(pBld, (U16)pSets->u32VpsLen);
         box_bytes(pBld, pSets->au8Vps, pSets->u32VpsLen);
@@ -241,12 +241,12 @@ static VOID box_write_hvcc(BoxBuilder *pBld, const MuxParamSets *pSets) {
         box_u8(pBld, 2);            /* numOfArrays: SPS, PPS (no VPS) */
     }
     /* SPS array */
-    box_u8(pBld, 0xA1);         /* array_completeness=1 + NAL_unit_type=33 (SPS) */
+    box_u8(pBld, 0xA1);         /* array_completeness = 1 + NAL_unit_type = 33 (SPS) */
     box_be16(pBld, 1);
     box_be16(pBld, (U16)pSets->u32SpsLen);
     box_bytes(pBld, pSets->au8Sps, pSets->u32SpsLen);
     /* PPS array */
-    box_u8(pBld, 0xA2);         /* array_completeness=1 + NAL_unit_type=34 (PPS) */
+    box_u8(pBld, 0xA2);         /* array_completeness = 1 + NAL_unit_type = 34 (PPS) */
     box_be16(pBld, 1);
     box_be16(pBld, (U16)pSets->u32PpsLen);
     box_bytes(pBld, pSets->au8Pps, pSets->u32PpsLen);
@@ -350,7 +350,7 @@ static VOID box_write_mvhd(BoxBuilder *pBld) {
 
 static VOID box_write_tkhd(BoxBuilder *pBld, MuxWriter *pWr) {
     U32 u32Pos = box_open(pBld, MUX_FOURCC('t', 'k', 'h', 'd'));
-    box_be32(pBld, 0x00000007); /* version=0, flags=enabled|in_movie|in_preview */
+    box_be32(pBld, 0x00000007); /* version = 0, flags = enabled|in_movie|in_preview */
     box_be32(pBld, 0);          /* creation_time */
     box_be32(pBld, 0);          /* modification_time */
     box_be32(pBld, MP4_TRACK_ID);
@@ -447,7 +447,7 @@ static VOID box_write_minf(BoxBuilder *pBld, MuxWriter *pWr) {
     /* vmhd */
     {
         U32 u32P = box_open(pBld, MUX_FOURCC('v', 'm', 'h', 'd'));
-        box_be32(pBld, 1); /* version + flags=1 */
+        box_be32(pBld, 1); /* version + flags = 1 */
         box_be32(pBld, 0); /* graphicsmode + opcolor */
         box_be32(pBld, 0);
         box_close(pBld, u32P);
@@ -460,7 +460,7 @@ static VOID box_write_minf(BoxBuilder *pBld, MuxWriter *pWr) {
         box_be32(pBld, 0); /* version + flags */
         box_be32(pBld, 1); /* entry_count */
         u32Url = box_open(pBld, MUX_FOURCC('u', 'r', 'l', ' '));
-        box_be32(pBld, 1); /* flags=self-contained */
+        box_be32(pBld, 1); /* flags = self-contained */
         box_close(pBld, u32Url);
         box_close(pBld, u32Dref);
         box_close(pBld, u32Dinf);

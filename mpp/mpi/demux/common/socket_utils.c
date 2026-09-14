@@ -195,7 +195,7 @@ S32 Socket_RecvTimeout(S32 s32Fd, U8 *pu8Buf, U32 u32Size, U32 u32TimeoutMs) {
             continue;
         }
         if (s32Ret <= 0) {
-            return s32Ret; /* 0=timeout, -1=error */
+            return s32Ret; /* 0 = timeout, -1 = error */
         }
 
         ssize_t n = recv(s32Fd, pu8Buf, u32Size, 0);
