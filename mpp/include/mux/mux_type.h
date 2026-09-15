@@ -92,10 +92,10 @@ typedef struct _MuxPacket {
  */
 typedef struct _MuxSegmentAttr {
     MuxFileFormat eFileFormat;     /* 封装格式：fMP4 / TS */
-    U32 u32MaxDurationMs;          /* 单文件最大时长，0=不限 */
-    U32 u32MaxSizeBytes;           /* 单文件最大字节数，0=不限 */
-    U32 u32FragDurationMs;         /* fMP4 单分片(moof)目标时长，0=每 GOP 一片 */
-    U32 u32FsyncIntervalMs;        /* 周期落盘间隔(ms)，0=用默认 1000ms */
+    U32 u32MaxDurationMs;          /* 单文件最大时长，0 = 不限 */
+    U32 u32MaxSizeBytes;           /* 单文件最大字节数，0 = 不限 */
+    U32 u32FragDurationMs;         /* fMP4 单分片(moof)目标时长，0 = 每 GOP 一片 */
+    U32 u32FsyncIntervalMs;        /* 周期落盘间隔(ms)，0 = 用默认 1000ms */
     /**
      * 文件名模板，支持 strftime 占位符与 "%d" 序号。
      * 例: "/mnt/sd/rec_%Y%m%d_%H%M%S.mp4"。为空时用内部默认模板。
@@ -116,7 +116,7 @@ typedef struct _MuxChnStat {
     U32 u32ActiveClients;
     U64 u64TotalPkts;
     U64 u64TotalBytes;
-    S32 s32State;        /* 0=idle, 1=created, 2=running */
+    S32 s32State;        /* 0 = idle, 1 = created, 2 = running */
     U32 u32FileCount;    /* 文件录像已生成的分段文件数量 */
     U64 u64CurFileBytes; /* 当前分段文件已写入字节数 */
     CHAR szCurFile[MUX_PATTERN_MAX_LEN]; /* 当前正在写入的文件路径 */
@@ -128,4 +128,4 @@ typedef struct _MuxChnStat {
 #endif
 #endif /* __cplusplus */
 
-#endif /* __MUX_TYPE_H__ */
+#endif // MUX_TYPE_H

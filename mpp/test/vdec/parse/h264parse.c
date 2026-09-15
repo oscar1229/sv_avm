@@ -46,7 +46,7 @@ static U32 read_bits(unsigned char bytes[], S32 num_read, S32 *bit_offset) {
     }
 
     bit_shift = (num_bytes_copy << 3) - (bit_offset_in_byte + num_read);
-    bits >>= bit_shift;
+    bits >> = bit_shift;
     bits &= (0xFFFFFFFF >> (32 - num_read));
 
     *bit_offset += num_read;

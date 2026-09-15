@@ -62,7 +62,7 @@ struct _RtspClient {
     CHAR szRealm[128];
     CHAR szNonce[128];
     CHAR szQop[32];   /* "auth" if server requires qop (RFC 2617) */
-    U32 u32NonceCount; /* nc counter for qop=auth */
+    U32 u32NonceCount; /* nc counter for qop = auth */
     BOOL bAuthRequired;
 
     /* SDP parsed info */

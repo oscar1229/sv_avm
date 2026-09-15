@@ -10,28 +10,33 @@
 ///
 /// <glm/gtx/mixed_product.hpp> need to be included to use these functionalities.
 
+#ifndef MIXED_PRODUCT_HPP
+#define MIXED_PRODUCT_HPP
+
 #pragma once
 
 // Dependency:
 #include "../glm.hpp"
 
 #if GLM_MESSAGES == GLM_MESSAGES_ENABLED && !defined(GLM_EXT_INCLUDED)
-#	pragma message("GLM: GLM_GTX_mixed_product extension included")
+#       pragma message("GLM: GLM_GTX_mixed_product extension included")
 #endif
 
 namespace glm
 {
-	/// @addtogroup gtx_mixed_product
-	/// @{
+    /// @addtogroup gtx_mixed_product
+    /// @{
 
-	/// @brief Mixed product of 3 vectors (from GLM_GTX_mixed_product extension)
-	template <typename T, precision P> 
-	GLM_FUNC_DECL T mixedProduct(
-		tvec3<T, P> const & v1, 
-		tvec3<T, P> const & v2, 
-		tvec3<T, P> const & v3);
+    /// @brief Mixed product of 3 vectors (from GLM_GTX_mixed_product extension)
+    template <typename T, precision P>
+    GLM_FUNC_DECL T mixedProduct(
+        tvec3<T, P> const & v1,
+        tvec3<T, P> const & v2,
+        tvec3<T, P> const & v3);
 
-	/// @}
+    /// @}
 }// namespace glm
 
 #include "mixed_product.inl"
+
+#endif  // MIXED_PRODUCT_HPP

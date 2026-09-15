@@ -39,8 +39,8 @@
 #include "src/svrender/camera/camerarender.hpp"
 #include "src/svmparam/svmparam.hpp"
 
-using namespace sm;
-using namespace sm::sv_avm;
+using namespace sm;  // NOLINT(build/namespaces)
+using namespace sm::sv_avm;  // NOLINT(build/namespaces)
 
 static SV_BOOL g_bExit = SV_FALSE;
 
@@ -399,7 +399,7 @@ static void LoadFallbackUYVYFrames(const SvRunConfig& stCfg, std::vector<SV_IMAG
         ResetImage(&stImage);
         if (SV_TRUE == LoadJPGImageUYVYDma(acPath, &stImage)) {
             LOG(INFO) << "Fallback ch" << i << " loaded: " << acPath
-                      << " (" << stImage.stImageSize.s32Width << "x" << stImage.stImageSize.s32Height << ")";
+                        << " (" << stImage.stImageSize.s32Width << "x" << stImage.stImageSize.s32Height << ")";
             pstFrames->push_back(stImage);
             continue;
         }
@@ -727,17 +727,17 @@ int main(int argc, char* argv[]) {
     if (stCfg.bLiveVi) stCfg.bZeroCopy = SV_TRUE;
 
     LOG(INFO) << "Config: zero_copy=" << (stCfg.bZeroCopy ? "true" : "false")
-              << ", live_vi=" << (stCfg.bLiveVi ? "true" : "false")
-              << ", frames=" << stCfg.s32Frames
-              << ", sleep_us=" << stCfg.s32SleepUs
-              << ", grid_subdiv=" << stCfg.s32GridSubdiv
-              << ", live_vi=" << stCfg.s32LiveViWidth << "x" << stCfg.s32LiveViHeight
-              << " timeout=" << stCfg.s32LiveViTimeoutMs << "ms"
-              << ", use_fallback_image=" << (stCfg.bUseFallbackImage ? "true" : "false")
-              << ", force_offscreen=" << (stCfg.bForceOffscreen ? "true" : "false")
-              << ", fallback_image_dir=" << stCfg.strFallbackImageDir
-              << ", offscreen_output_path="
-              << (stCfg.strOffscreenOutputPath.empty() ? "(disabled)" : stCfg.strOffscreenOutputPath);
+                << ", live_vi=" << (stCfg.bLiveVi ? "true" : "false")
+                << ", frames=" << stCfg.s32Frames
+                << ", sleep_us=" << stCfg.s32SleepUs
+                << ", grid_subdiv=" << stCfg.s32GridSubdiv
+                << ", live_vi=" << stCfg.s32LiveViWidth << "x" << stCfg.s32LiveViHeight
+                << " timeout=" << stCfg.s32LiveViTimeoutMs << "ms"
+                << ", use_fallback_image=" << (stCfg.bUseFallbackImage ? "true" : "false")
+                << ", force_offscreen=" << (stCfg.bForceOffscreen ? "true" : "false")
+                << ", fallback_image_dir=" << stCfg.strFallbackImageDir
+                << ", offscreen_output_path="
+                << (stCfg.strOffscreenOutputPath.empty() ? "(disabled)" : stCfg.strOffscreenOutputPath);
 
     const char* s8XmlFile = "../sv_avm_test/_aParam.xml";
     const char* s8DaeFile = "../sv_avm_test/res/concept_BUS cycles.dae";
@@ -763,7 +763,7 @@ int main(int argc, char* argv[]) {
     const SV_BOOL bOffscreen = svrender::display::InnerSV_bIsOffscreenMode();
     SV_SIZE_S stSize = svrender::display::InnerSV_GetDisplayFrameSize();
     LOG(INFO) << "Render target: " << (bOffscreen ? "offscreen" : "display")
-              << ", size: " << stSize.s32Width << "x" << stSize.s32Height;
+                << ", size: " << stSize.s32Width << "x" << stSize.s32Height;
 
     svrender::mvp::InnerSV_MvCalss stMvClass;
     stMvClass.Initialized();
@@ -833,7 +833,7 @@ int main(int argc, char* argv[]) {
 
     std::vector<SV_F64> vTexMs, vSubmitMs, vGpuWaitMs, vSwapMs, vFrameMs;
     #define SV_NOW(tv) gettimeofday(&(tv), NULL)
-    #define SV_MS(a,b) (((b).tv_sec-(a).tv_sec)*1000.0 + ((b).tv_usec-(a).tv_usec)/1000.0)
+    #define SV_MS(a, b) (((b).tv_sec-(a).tv_sec)*1000.0 + ((b).tv_usec-(a).tv_usec)/1000.0)
 
     struct timeval stTvStart, stTvEnd;
     struct timeval stFpsReportStart;
@@ -872,8 +872,8 @@ int main(int argc, char* argv[]) {
         if (stCfg.s32SleepUs > 0) usleep(stCfg.s32SleepUs);
         SV_NOW(t5);
 
-        SV_F64 f64Tex=SV_MS(t0,t1), f64Submit=SV_MS(t1,t2), f64GpuWait=SV_MS(t2,t3),
-               f64Swap=SV_MS(t3,t4), f64Frame=SV_MS(t0,t4);
+        SV_F64 f64Tex = SV_MS(t0, t1), f64Submit = SV_MS(t1, t2), f64GpuWait = SV_MS(t2, t3),
+                f64Swap = SV_MS(t3, t4), f64Frame = SV_MS(t0, t4);
         vTexMs.push_back(f64Tex); vSubmitMs.push_back(f64Submit); vGpuWaitMs.push_back(f64GpuWait);
         vSwapMs.push_back(f64Swap); vFrameMs.push_back(f64Frame);
         f64WinTexSum += f64Tex;
@@ -893,15 +893,15 @@ int main(int argc, char* argv[]) {
             SV_F64 f64WinRenderAvg = f64WinRenderSum * f64InvWinFrames;
             SV_F64 f64WinRenderFps = (f64WinRenderAvg > 0.0) ? (1000.0 / f64WinRenderAvg) : 0.0;
             LOG(INFO) << "Window stats: frames=" << s32FpsReportFrame << "-" << (s32FrameCount - 1)
-                      << ", count=" << s32WinFrames
-                      << ", elapsed=" << f64WinSec << " s"
-                      << ", wall_fps=" << f64WinFps
-                      << ", render_fps=" << f64WinRenderFps
-                      << ", tex_avg=" << (f64WinTexSum * f64InvWinFrames) << " ms"
-                      << ", submit_avg=" << (f64WinSubmitSum * f64InvWinFrames) << " ms"
-                      << ", gpu_wait_avg=" << (f64WinGpuWaitSum * f64InvWinFrames) << " ms"
-                      << ", swap_avg=" << (f64WinSwapSum * f64InvWinFrames) << " ms"
-                      << ", render_total_avg=" << f64WinRenderAvg << " ms";
+                        << ", count=" << s32WinFrames
+                        << ", elapsed=" << f64WinSec << " s"
+                        << ", wall_fps=" << f64WinFps
+                        << ", render_fps=" << f64WinRenderFps
+                        << ", tex_avg=" << (f64WinTexSum * f64InvWinFrames) << " ms"
+                        << ", submit_avg=" << (f64WinSubmitSum * f64InvWinFrames) << " ms"
+                        << ", gpu_wait_avg=" << (f64WinGpuWaitSum * f64InvWinFrames) << " ms"
+                        << ", swap_avg=" << (f64WinSwapSum * f64InvWinFrames) << " ms"
+                        << ", render_total_avg=" << f64WinRenderAvg << " ms";
             stFpsReportStart = stFpsNow;
             s32FpsReportFrame = s32FrameCount;
             f64WinTexSum = 0.0;
@@ -919,8 +919,8 @@ int main(int argc, char* argv[]) {
     for (SV_F64 x : vFrameMs) f64RenderMsSum += x;
     SV_F64 f64RenderFps = (f64RenderMsSum > 0.0) ? (1000.0 * vFrameMs.size() / f64RenderMsSum) : 0.0;
     LOG(INFO) << "Rendered " << s32FrameCount << " frames in " << f64ElapsedSec
-              << " s, wall_fps=" << f64WallFps
-              << ", render_fps=" << f64RenderFps;
+                << " s, wall_fps=" << f64WallFps
+                << ", render_fps=" << f64RenderFps;
 
     struct StatItem { const char* name; std::vector<SV_F64>* v; };
     StatItem items[] = {
@@ -931,8 +931,8 @@ int main(int argc, char* argv[]) {
     for (auto& it : items) {
         const std::vector<SV_F64>& v = *it.v;
         if (v.empty()) continue;
-        SV_F64 sum=0, mn=v[0], mx=v[0];
-        for (SV_F64 x : v) { sum+=x; if(x<mn)mn=x; if(x>mx)mx=x; }
+        SV_F64 sum = 0, mn = v[0], mx = v[0];
+        for (SV_F64 x : v) { sum+=x; if (x < mn)mn = x; if (x > mx)mx = x; }
         LOG(INFO) << "  " << it.name << ": avg=" << (sum/v.size()) << " ms, min=" << mn << " ms, max=" << mx << " ms";
     }
 

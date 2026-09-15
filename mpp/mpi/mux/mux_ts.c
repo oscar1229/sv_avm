@@ -98,7 +98,7 @@ static U32 ts_crc32(const U8 *pu8Data, U32 u32Len) {
             if (u32Crc & 0x80000000U) {
                 u32Crc = (u32Crc << 1) ^ 0x04C11DB7U;
             } else {
-                u32Crc <<= 1;
+                u32Crc << = 1;
             }
         }
     }

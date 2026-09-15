@@ -11,6 +11,9 @@
 ///
 /// <glm/gtx/perpendicular.hpp> need to be included to use these functionalities.
 
+#ifndef PERPENDICULAR_HPP
+#define PERPENDICULAR_HPP
+
 #pragma once
 
 // Dependency:
@@ -18,22 +21,24 @@
 #include "../gtx/projection.hpp"
 
 #if GLM_MESSAGES == GLM_MESSAGES_ENABLED && !defined(GLM_EXT_INCLUDED)
-#	pragma message("GLM: GLM_GTX_perpendicular extension included")
+#       pragma message("GLM: GLM_GTX_perpendicular extension included")
 #endif
 
 namespace glm
 {
-	/// @addtogroup gtx_perpendicular
-	/// @{
+    /// @addtogroup gtx_perpendicular
+    /// @{
 
-	//! Projects x a perpendicular axis of Normal.
-	//! From GLM_GTX_perpendicular extension.
-	template <typename vecType> 
-	GLM_FUNC_DECL vecType perp(
-		vecType const & x, 
-		vecType const & Normal);
+    //! Projects x a perpendicular axis of Normal.
+    //! From GLM_GTX_perpendicular extension.
+    template <typename vecType>
+    GLM_FUNC_DECL vecType perp(
+        vecType const & x,
+        vecType const & Normal);
 
-	/// @}
+    /// @}
 }//namespace glm
 
 #include "perpendicular.inl"
+
+#endif  // PERPENDICULAR_HPP

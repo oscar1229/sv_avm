@@ -96,12 +96,12 @@ typedef struct _DemuxChnAttr {
     DemuxInputType eInputType;
     CHAR szUrl[DEMUX_URL_MAX_LEN];
     BOOL bPreferTcp;          /* RTSP over TCP */
-    BOOL bLowLatency;         /* nobuffer / reorder_queue_size=0 */
+    BOOL bLowLatency;         /* nobuffer / reorder_queue_size = 0 */
     U32 u32OpenTimeoutMs;     /* 打开超时 ms */
     U32 u32RwTimeoutMs;       /* 读写超时 ms */
     U32 u32ReconnectMs;       /* 断线重连间隔 ms */
-    U32 u32AnalyzeDurationMs; /* 流分析时长 ms, 0=默认 */
-    U32 u32ProbeSizeBytes;    /* 探测大小, 0=默认 */
+    U32 u32AnalyzeDurationMs; /* 流分析时长 ms, 0 = 默认 */
+    U32 u32ProbeSizeBytes;    /* 探测大小, 0 = 默认 */
     BOOL bInjectPS;           /* IDR 前注入 VPS/SPS/PPS */
 } DemuxChnAttr;
 
@@ -111,4 +111,4 @@ typedef struct _DemuxChnAttr {
 #endif
 #endif /* __cplusplus */
 
-#endif /* __DEMUX_TYPE_H__ */
+#endif // DEMUX_TYPE_H
