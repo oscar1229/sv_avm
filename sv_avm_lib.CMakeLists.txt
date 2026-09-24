@@ -1,0 +1,78 @@
+cmake_minimum_required(VERSION 3.10)
+project(sv_avm_demo)
+
+# Build the example against installed sv_avm libraries and sibling MPP.
+set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fPIC -fpermissive -w")
+
+add_definitions(
+    -DGLOG_USE_GLOG_EXPORT
+    -DEGL_USE_X11
+    -DLINUX
+    -DSV_STONKAM_TEST
+    -DSTTONKAM_DEBUG
+    -DNDEBUG
+    -DUBUNTU
+)
+
+find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs highgui calib3d)
+find_package(glog QUIET)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(EGL REQUIRED egl)
+pkg_check_modules(GLES REQUIRED glesv2)
+find_package(X11 REQUIRED)
+find_package(Threads REQUIRED)
+
+get_filename_component(MPP_ROOT "${CMAKE_SOURCE_DIR}/../mpp" ABSOLUTE)
+if(NOT EXISTS "${MPP_ROOT}/include/sys/sys_api.h" OR
+   NOT EXISTS "${MPP_ROOT}/build/lib/libmpp.so")
+    message(FATAL_ERROR "Shared MPP headers or library not found at ${MPP_ROOT}")
+endif()
+add_definitions(-DSV_AVM_ENABLE_MPP)
+set(SV_AVM_MPP_LIB "${MPP_ROOT}/build/lib/libmpp.so")
+set(SV_AVM_MPP_INCLUDE_DIRS
+    ${MPP_ROOT}/include/sys
+    ${MPP_ROOT}/include/vi
+    ${MPP_ROOT}/include/v2d
+    ${MPP_ROOT}/include/venc
+    ${MPP_ROOT}/include/vdec
+    ${MPP_ROOT}/utils/include
+    ${MPP_ROOT}/al/include
+)
+
+include_directories(
+    ${CMAKE_SOURCE_DIR}/include
+    ${OpenCV_INCLUDE_DIRS}
+    ${EGL_INCLUDE_DIRS}
+    ${GLES_INCLUDE_DIRS}
+    ${X11_INCLUDE_DIR}
+    ${SV_AVM_MPP_INCLUDE_DIRS}
+)
+
+set(SV_AVM_LIB_DIR "${CMAKE_SOURCE_DIR}/lib")
+foreach(_lib svmparam svmcalibrate svrender)
+    if(NOT EXISTS "${SV_AVM_LIB_DIR}/lib${_lib}.so")
+        message(FATAL_ERROR "Installed sv_avm library missing: lib${_lib}.so")
+    endif()
+    add_library(${_lib} SHARED IMPORTED)
+    set_target_properties(${_lib} PROPERTIES
+        IMPORTED_LOCATION "${SV_AVM_LIB_DIR}/lib${_lib}.so")
+endforeach()
+
+add_executable(sv_avm_render_test sv_avm_test/sv_avm_render_main_test.cpp)
+target_link_libraries(sv_avm_render_test
+    svrender
+    svmcalibrate
+    svmparam
+    ${OpenCV_LIBS}
+    glog::glog
+    ${GLES_LIBRARIES} ${EGL_LIBRARIES}
+    ${X11_LIBRARIES}
+    Threads::Threads
+    dl assimp
+    ${SV_AVM_MPP_LIB}
+)
+
+get_filename_component(_opencv_libdir "${OpenCV_DIR}/../.." ABSOLUTE)
+set_target_properties(sv_avm_render_test PROPERTIES
+    BUILD_RPATH "${SV_AVM_LIB_DIR}:${MPP_ROOT}/build/lib:${_opencv_libdir}")

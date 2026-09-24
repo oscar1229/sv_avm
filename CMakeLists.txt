@@ -33,9 +33,9 @@ find_package(X11 REQUIRED)
 # 线程
 find_package(Threads REQUIRED)
 
-# MPP/VI 摄像头输入，作为本工程的一部分(mpp/ 为项目根目录下的子目录或软链接)。
+# MPP/VI 摄像头输入，统一使用同级目录中的 mpp 仓库。
 # 缺少 mpp 时摄像头不可用，程序自动回退为读取图片。
-set(MPP_ROOT ${CMAKE_SOURCE_DIR}/mpp)
+get_filename_component(MPP_ROOT "${CMAKE_SOURCE_DIR}/../mpp" ABSOLUTE)
 set(SV_AVM_MPP_LIB "")
 if(EXISTS ${MPP_ROOT}/include/sys/sys_api.h AND EXISTS ${MPP_ROOT}/build/lib/libmpp.so)
     add_definitions(-DSV_AVM_ENABLE_MPP)
@@ -57,13 +57,13 @@ endif()
 # --- 安装后的 RPATH ---
 # CMake 默认在安装时剥离 RPATH，会导致安装后的 .so 找不到 OpenCV/MPP
 # (二者都不在系统默认搜索路径中)。这里显式写入依赖库目录，
-# 使 sv_avm_lib 这类只依赖 install 产物的工程无需设置 LD_LIBRARY_PATH。
+# 使 sv_avm_lib 等测试工程无需设置 LD_LIBRARY_PATH。
 # 必须在 add_library/add_executable 之前设置，否则不会写入目标属性。
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-# mpp 安装后与三个 sv_avm 库同在 install/lib/，$ORIGIN 即可找到。
+# MPP 来自同级目录的共享仓库，直接加入其构建库目录。
 # OpenCV 在非系统路径，需显式写入。
 get_filename_component(_opencv_libdir "${OpenCV_DIR}/../.." ABSOLUTE)
-set(CMAKE_INSTALL_RPATH "$ORIGIN:${_opencv_libdir}")
+set(CMAKE_INSTALL_RPATH "$ORIGIN:${MPP_ROOT}/build/lib:${_opencv_libdir}")
 message(STATUS "Install RPATH: ${CMAKE_INSTALL_RPATH}")
 
 include_directories(
@@ -116,11 +116,11 @@ target_link_libraries(svrender
     dl assimp
 )
 
-# --- 安装前缀：默认装到工程内 install/，不污染 /usr/local ---
-# 用户显式传 -DCMAKE_INSTALL_PREFIX=... 时以用户指定为准。
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-    set(CMAKE_INSTALL_PREFIX ${CMAKE_SOURCE_DIR}/install CACHE PATH "install prefix" FORCE)
-endif()
+# --- 默认安装到同级 sv_avm_lib，覆盖旧 build 缓存中的 install/ 前缀。---
+set(SV_AVM_LIB_DIR "${CMAKE_SOURCE_DIR}/../sv_avm_lib"
+    CACHE PATH "Consumer project populated by cmake --install")
+get_filename_component(SV_AVM_LIB_DIR "${SV_AVM_LIB_DIR}" ABSOLUTE)
+set(CMAKE_INSTALL_PREFIX "${SV_AVM_LIB_DIR}" CACHE PATH "Install path" FORCE)
 message(STATUS "Install prefix: ${CMAKE_INSTALL_PREFIX}")
 
 # --- 安装：sv_avm 三个库 ---
@@ -130,26 +130,6 @@ install(TARGETS svmparam svmcalibrate svrender
     RUNTIME DESTINATION bin
 )
 
-# --- 安装：mpp 库及头文件(使 sv_avm_lib 完全自包含，无需外部 mpp 路径) ---
-if(SV_AVM_MPP_LIB)
-    install(FILES
-        ${MPP_ROOT}/build/lib/libmpp.so
-        ${MPP_ROOT}/build/lib/libmpp.so.1
-        ${MPP_ROOT}/build/lib/libmpp.so.1.0.0
-        ${MPP_ROOT}/build/lib/libvi_k3_cam_plugin.so
-        DESTINATION lib)
-    foreach(_d sys vi v2d venc vdec)
-        install(DIRECTORY ${MPP_ROOT}/include/${_d}
-            DESTINATION include/mpp
-            FILES_MATCHING PATTERN "*.h")
-    endforeach()
-    install(DIRECTORY ${MPP_ROOT}/utils/include/
-        DESTINATION include/mpp/utils
-        FILES_MATCHING PATTERN "*.h")
-    install(DIRECTORY ${MPP_ROOT}/al/include/
-        DESTINATION include/mpp/al
-        FILES_MATCHING PATTERN "*.h")
-endif()
 install(FILES
     ${CMAKE_SOURCE_DIR}/include/svrender.hpp
     ${CMAKE_SOURCE_DIR}/include/svmcalibrate.hpp
@@ -205,6 +185,16 @@ target_link_libraries(sv_avm_render_test
     dl assimp
     ${SV_AVM_MPP_LIB}
 )
+
+# Runtime configuration, launcher, and demo/calibration assets.
+install(FILES ${CMAKE_SOURCE_DIR}/config.json DESTINATION .)
+install(PROGRAMS ${CMAKE_SOURCE_DIR}/run_live_vi.sh DESTINATION .)
+install(DIRECTORY ${TEST_DIR}
+    DESTINATION .)
+install(FILES ${CMAKE_SOURCE_DIR}/sv_avm_lib.CMakeLists.txt
+    DESTINATION . RENAME CMakeLists.txt)
+install(FILES ${CMAKE_SOURCE_DIR}/sv_avm_lib.README.md
+    DESTINATION . RENAME README.md)
 
 # 程序直接从 ../sv_avm_test/ 读取 res/ 和 _aParam.xml，无需拷贝到 build/。
 # config.json 同理，以 ../config.json (工程根目录) 为唯一配置来源。

@@ -26,6 +26,7 @@
   // 摄像头不可用时读取的图片目录（相对工程根目录）
   // 需包含 imagech0.jpg ~ imagech3.jpg
   "fallback_image_dir": "sv_avm_test/res",
+  "calibration_image_save_dir": "output",
 
   // true 表示强制离屏渲染，即使显示器可用（需同时配置 offscreen_output_path）
   // false 表示自动检测：仅在显示器不可用时离屏渲染
@@ -34,5 +35,7 @@
   // 无显示器时离屏渲染结果的保存路径（相对工程根目录）
   // 仅在检测到无显示器时生效；有显示器时忽略该配置
   // 渲染结束（帧数用尽或 Ctrl+C）时保存最后一帧
-  "offscreen_output_path": "output/render.jpg"
+  "offscreen_output_path": "output/render.jpg",
+  "offscreen_width": 1920,
+  "offscreen_height": 1080
 }
