@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.10)
 project(sv_avm_demo)
 
-# Build the example against installed sv_avm libraries and sibling MPP.
+# Build the example against installed sv_avm libraries and sibling MPP source.
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -fPIC -fpermissive -w")
 
@@ -23,22 +23,24 @@ pkg_check_modules(GLES REQUIRED glesv2)
 find_package(X11 REQUIRED)
 find_package(Threads REQUIRED)
 
-get_filename_component(MPP_ROOT "${CMAKE_SOURCE_DIR}/../mpp" ABSOLUTE)
-if(NOT EXISTS "${MPP_ROOT}/include/sys/sys_api.h" OR
-   NOT EXISTS "${MPP_ROOT}/build/lib/libmpp.so")
-    message(FATAL_ERROR "Shared MPP headers or library not found at ${MPP_ROOT}")
+set(MPP_ROOT "${CMAKE_SOURCE_DIR}/../../../multimedia/mpp/" CACHE PATH "MPP source directory")
+get_filename_component(MPP_ROOT "${MPP_ROOT}" ABSOLUTE)
+if(NOT EXISTS "${MPP_ROOT}/CMakeLists.txt")
+    message(FATAL_ERROR "MPP source tree not found at ${MPP_ROOT}")
+endif()
+set(BUILD_TESTS OFF CACHE BOOL "Build MPP tests" FORCE)
+add_subdirectory("${MPP_ROOT}" "${CMAKE_BINARY_DIR}/mpp" EXCLUDE_FROM_ALL)
+
+# MPP is a subproject here, so CMAKE_SOURCE_DIR points at this project, not MPP.
+# mpi/mux/CMakeLists.txt uses ${CMAKE_SOURCE_DIR}/mpi/demux to find codec/h264_utils.h
+# and other demux helpers; that path resolves to a non-existent directory and
+# breaks the build. Add the real path here to avoid patching the shared MPP checkout.
+if(TARGET mpp_mux)
+  target_include_directories(mpp_mux PRIVATE "${MPP_ROOT}/mpi/demux")
+else()
+  message(FATAL_ERROR "mpp_mux target missing: MPP layout changed")
 endif()
 add_definitions(-DSV_AVM_ENABLE_MPP)
-set(SV_AVM_MPP_LIB "${MPP_ROOT}/build/lib/libmpp.so")
-set(SV_AVM_MPP_INCLUDE_DIRS
-    ${MPP_ROOT}/include/sys
-    ${MPP_ROOT}/include/vi
-    ${MPP_ROOT}/include/v2d
-    ${MPP_ROOT}/include/venc
-    ${MPP_ROOT}/include/vdec
-    ${MPP_ROOT}/utils/include
-    ${MPP_ROOT}/al/include
-)
 
 include_directories(
     ${CMAKE_SOURCE_DIR}/include
@@ -46,7 +48,9 @@ include_directories(
     ${EGL_INCLUDE_DIRS}
     ${GLES_INCLUDE_DIRS}
     ${X11_INCLUDE_DIR}
-    ${SV_AVM_MPP_INCLUDE_DIRS}
+    ${MPP_ROOT}/include ${MPP_ROOT}/include/sys ${MPP_ROOT}/include/vi
+    ${MPP_ROOT}/include/v2d ${MPP_ROOT}/include/venc ${MPP_ROOT}/include/vdec
+    ${MPP_ROOT}/utils/include ${MPP_ROOT}/al/include
 )
 
 set(SV_AVM_LIB_DIR "${CMAKE_SOURCE_DIR}/lib")
@@ -60,6 +64,11 @@ foreach(_lib svmparam svmcalibrate svrender)
 endforeach()
 
 add_executable(sv_avm_render_test sv_avm_test/sv_avm_render_main_test.cpp)
+if(TARGET vi_k3_cam_plugin)
+    add_dependencies(sv_avm_render_test vi_k3_cam_plugin)
+elseif(TARGET vi_k1_cam_plugin)
+    add_dependencies(sv_avm_render_test vi_k1_cam_plugin)
+endif()
 target_link_libraries(sv_avm_render_test
     svrender
     svmcalibrate
@@ -70,9 +79,9 @@ target_link_libraries(sv_avm_render_test
     ${X11_LIBRARIES}
     Threads::Threads
     dl assimp
-    ${SV_AVM_MPP_LIB}
+    mpp
 )
 
 get_filename_component(_opencv_libdir "${OpenCV_DIR}/../.." ABSOLUTE)
 set_target_properties(sv_avm_render_test PROPERTIES
-    BUILD_RPATH "${SV_AVM_LIB_DIR}:${MPP_ROOT}/build/lib:${_opencv_libdir}")
+    BUILD_RPATH "${SV_AVM_LIB_DIR}:${_opencv_libdir}")

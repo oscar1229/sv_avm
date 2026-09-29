@@ -33,37 +33,35 @@ find_package(X11 REQUIRED)
 # 线程
 find_package(Threads REQUIRED)
 
-# MPP/VI 摄像头输入，统一使用同级目录中的 mpp 仓库。
-# 缺少 mpp 时摄像头不可用，程序自动回退为读取图片。
-get_filename_component(MPP_ROOT "${CMAKE_SOURCE_DIR}/../mpp" ABSOLUTE)
-set(SV_AVM_MPP_LIB "")
-if(EXISTS ${MPP_ROOT}/include/sys/sys_api.h AND EXISTS ${MPP_ROOT}/build/lib/libmpp.so)
-    add_definitions(-DSV_AVM_ENABLE_MPP)
-    set(SV_AVM_MPP_LIB ${MPP_ROOT}/build/lib/libmpp.so)
-    set(SV_AVM_MPP_INCLUDE_DIRS
-        ${MPP_ROOT}/include/sys
-        ${MPP_ROOT}/include/vi
-        ${MPP_ROOT}/include/v2d
-        ${MPP_ROOT}/include/venc
-        ${MPP_ROOT}/include/vdec
-        ${MPP_ROOT}/utils/include
-        ${MPP_ROOT}/al/include
-    )
-    message(STATUS "MPP live VI input enabled: ${MPP_ROOT}")
-else()
-    message(WARNING "MPP not found at ${MPP_ROOT}; camera input unavailable, will use fallback images.")
+# MPP/VI 摄像头输入，直接编译目标工程中的统一 MPP 源码。
+set(MPP_ROOT "/home/szl/spacemit_robot/components/multimedia/mpp")
+if(NOT EXISTS "${MPP_ROOT}/CMakeLists.txt")
+    message(FATAL_ERROR "MPP source tree not found at ${MPP_ROOT}")
 endif()
+set(BUILD_TESTS OFF CACHE BOOL "Build MPP tests" FORCE)
+add_subdirectory("${MPP_ROOT}" "${CMAKE_BINARY_DIR}/mpp" EXCLUDE_FROM_ALL)
+
+# MPP 此处是子工程，其中的 CMAKE_SOURCE_DIR 指向本工程而非 MPP。
+# mpi/mux/CMakeLists.txt 用 ${CMAKE_SOURCE_DIR}/mpi/demux 引用 demux 的
+# codec/h264_utils.h 等头文件，会解析到不存在的路径导致编译失败。
+# 因此在这里为该目标补上真实目录，避免修改共享的 MPP 源码。
+if(TARGET mpp_mux)
+    target_include_directories(mpp_mux PRIVATE "${MPP_ROOT}/mpi/demux")
+else()
+    message(FATAL_ERROR "mpp_mux target missing: MPP layout changed")
+endif()
+add_definitions(-DSV_AVM_ENABLE_MPP)
+message(STATUS "MPP source enabled: ${MPP_ROOT}")
 
 # --- 安装后的 RPATH ---
-# CMake 默认在安装时剥离 RPATH，会导致安装后的 .so 找不到 OpenCV/MPP
-# (二者都不在系统默认搜索路径中)。这里显式写入依赖库目录，
+# CMake 默认在安装时剥离 RPATH，会导致安装后的 .so 找不到 OpenCV。
+# 这里显式写入依赖库目录，
 # 使 sv_avm_lib 等测试工程无需设置 LD_LIBRARY_PATH。
 # 必须在 add_library/add_executable 之前设置，否则不会写入目标属性。
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-# MPP 来自同级目录的共享仓库，直接加入其构建库目录。
 # OpenCV 在非系统路径，需显式写入。
 get_filename_component(_opencv_libdir "${OpenCV_DIR}/../.." ABSOLUTE)
-set(CMAKE_INSTALL_RPATH "$ORIGIN:${MPP_ROOT}/build/lib:${_opencv_libdir}")
+set(CMAKE_INSTALL_RPATH "$ORIGIN:${_opencv_libdir}")
 message(STATUS "Install RPATH: ${CMAKE_INSTALL_RPATH}")
 
 include_directories(
@@ -73,7 +71,9 @@ include_directories(
     ${EGL_INCLUDE_DIRS}
     ${GLES_INCLUDE_DIRS}
     ${X11_INCLUDE_DIR}
-    ${SV_AVM_MPP_INCLUDE_DIRS}
+    ${MPP_ROOT}/include ${MPP_ROOT}/include/sys ${MPP_ROOT}/include/vi
+    ${MPP_ROOT}/include/v2d ${MPP_ROOT}/include/venc ${MPP_ROOT}/include/vdec
+    ${MPP_ROOT}/utils/include ${MPP_ROOT}/al/include
 )
 
 # ============================================================
@@ -116,10 +116,8 @@ target_link_libraries(svrender
     dl assimp
 )
 
-# --- 默认安装到同级 sv_avm_lib，覆盖旧 build 缓存中的 install/ 前缀。---
-set(SV_AVM_LIB_DIR "${CMAKE_SOURCE_DIR}/../sv_avm_lib"
-    CACHE PATH "Consumer project populated by cmake --install")
-get_filename_component(SV_AVM_LIB_DIR "${SV_AVM_LIB_DIR}" ABSOLUTE)
+# --- 默认安装到 spacemit_robot 中的鱼眼拼接模块。---
+set(SV_AVM_LIB_DIR "/home/szl/spacemit_robot/components/perception/image_stitching/fisheye_image_stitching")
 set(CMAKE_INSTALL_PREFIX "${SV_AVM_LIB_DIR}" CACHE PATH "Install path" FORCE)
 message(STATUS "Install prefix: ${CMAKE_INSTALL_PREFIX}")
 
@@ -172,6 +170,11 @@ install(DIRECTORY ${CMAKE_SOURCE_DIR}/src/svrender/common/glm
 set(TEST_DIR ${CMAKE_SOURCE_DIR}/sv_avm_test)
 
 add_executable(sv_avm_render_test ${TEST_DIR}/sv_avm_render_main_test.cpp)
+if(TARGET vi_k3_cam_plugin)
+    add_dependencies(sv_avm_render_test vi_k3_cam_plugin)
+elseif(TARGET vi_k1_cam_plugin)
+    add_dependencies(sv_avm_render_test vi_k1_cam_plugin)
+endif()
 
 target_link_libraries(sv_avm_render_test
     svrender
@@ -183,7 +186,7 @@ target_link_libraries(sv_avm_render_test
     ${X11_LIBRARIES}
     Threads::Threads
     dl assimp
-    ${SV_AVM_MPP_LIB}
+    mpp
 )
 
 # Runtime configuration, launcher, and demo/calibration assets.
